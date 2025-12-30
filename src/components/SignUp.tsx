@@ -1,15 +1,13 @@
 import { Group, Button, Card, Stack, TextInput, Text } from "@mantine/core";
-import { useLogin } from "~/hooks/auth";
+import { useLogin, useSignup } from "~/hooks/auth";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 
-export function Login() {
-  const login = useLogin();
+export function Signup() {
+  const signup = useSignup();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  console.log(login);
 
   return (
     <Group justify="center" mt="20vh">
@@ -17,7 +15,7 @@ export function Login() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            login.mutate({
+            signup.mutate({
               data: {
                 email,
                 password,
@@ -27,7 +25,7 @@ export function Login() {
         >
           <Stack>
             <Text ta="center" fw="bold" fz="lg">
-              Login
+              Sign up
             </Text>
             <TextInput
               label="Email"
@@ -37,8 +35,8 @@ export function Login() {
             />
             <TextInput
               label="Password"
-              name="password"
               type="password"
+              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -47,17 +45,17 @@ export function Login() {
               fz="sm"
               c="blue"
               component={Link}
-              to="/signup"
+              to="/login"
               td="underline"
               w="fit-content"
               ml="auto"
             >
-              Sign up
-            </Text>
-            {login.data?.error && <Text color="red">{login.data.message}</Text>}
-            <Button type="submit" loading={login.isPending}>
               Login
+            </Text>
+            <Button type="submit" loading={signup.isPending}>
+              Sign Up
             </Button>
+            {signup.data?.error && <Text c="red">{signup.data.message}</Text>}
           </Stack>
         </form>
       </Card>

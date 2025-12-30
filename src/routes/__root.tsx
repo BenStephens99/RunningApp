@@ -7,34 +7,33 @@ import {
   createRootRoute,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { createServerFn } from "@tanstack/react-start";
 import * as React from "react";
 import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import appCss from "../styles/app.css?url";
 import { seo } from "../utils/seo";
-import { getSupabaseServerClient } from "../utils/supabase";
+import { getUser } from "../serverFunctions";
 
 import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
 
-import { MantineProvider } from "@mantine/core";
+import {
+  AppShell,
+  Box,
+  Button,
+  Group,
+  MantineProvider,
+  Text,
+} from "@mantine/core";
 
-const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
-  const supabase = getSupabaseServerClient();
-  const { data, error: _error } = await supabase.auth.getUser();
-
-  if (!data.user?.email) {
-    return null;
-  }
-
-  return {
-    email: data.user.email,
-  };
-});
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "../utils/queryClient";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { QueryCacheKeys } from "~/QueryCacheKeys";
 
 export const Route = createRootRoute({
   beforeLoad: async () => {
-    const user = await fetchUser();
+    const user = await getUser();
 
     return {
       user,
@@ -91,57 +90,66 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <MantineProvider>
-      <RootDocument>
-        <Outlet />
-      </RootDocument>
-    </MantineProvider>
+    <RootDocument>
+      <Outlet />
+    </RootDocument>
   );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { user } = Route.useRouteContext();
+  queryClient.setQueryData(QueryCacheKeys.user(), user);
 
   return (
     <html>
       <head>
         <HeadContent />
       </head>
-      <body>
-        <div className="p-2 flex gap-2 text-lg">
-          <Link
-            to="/"
-            activeProps={{
-              className: "font-bold",
-            }}
-            activeOptions={{ exact: true }}
-          >
-            Home
-          </Link>{" "}
-          <Link
-            to="/posts"
-            activeProps={{
-              className: "font-bold",
-            }}
-          >
-            Posts
-          </Link>
-          <div className="ml-auto">
-            {user ? (
-              <>
-                <span className="mr-2">{user.email}</span>
-                <Link to="/logout">Logout</Link>
-              </>
-            ) : (
-              <Link to="/login">Login</Link>
-            )}
-          </div>
-        </div>
-        <hr />
-        {children}
-        <TanStackRouterDevtools position="bottom-right" />
-        <Scripts />
-      </body>
+      <MantineProvider>
+        <QueryClientProvider client={queryClient}>
+          <AppShell bg="gray.0" header={{ height: 60 }}>
+            <AppShell.Header py="xs">
+              <Group w="100%" maw={"1200px"} mx="auto" justify="space-between">
+                <Group>
+                  <Button component={Link} to="/">
+                    Home
+                  </Button>
+                  <Button component={Link} to="/posts">
+                    Posts
+                  </Button>
+                </Group>
+                <Group>
+                  {user ? (
+                    <Group>
+                      <Text>{user.email}</Text>
+                      <Button component={Link} to="/logout">
+                        Logout
+                      </Button>
+                    </Group>
+                  ) : (
+                    <Button component={Link} to="/login">
+                      Login
+                    </Button>
+                  )}
+                </Group>
+              </Group>
+            </AppShell.Header>
+            <AppShell.Main w="100%" maw={"1200px"} mx="auto">
+              <Box my="md" h="100%">
+                {children}
+              </Box>
+            </AppShell.Main>
+            <AppShell.Footer py="xs">
+              <Group w="100%" maw={"1200px"} mx="auto">
+                <Text>Footer</Text>
+              </Group>
+            </AppShell.Footer>
+          </AppShell>
+          <TanStackRouterDevtools position="bottom-right" />
+          <ReactQueryDevtools buttonPosition="bottom-right" />
+          <Scripts />
+        </QueryClientProvider>
+      </MantineProvider>
     </html>
   );
 }
