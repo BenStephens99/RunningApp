@@ -1,9 +1,20 @@
-import { Button, Card, Group, Modal, NumberInput } from "@mantine/core";
+import {
+  Button,
+  Card,
+  Group,
+  Modal,
+  NumberInput,
+  ActionIcon,
+  Text,
+  Divider,
+  Box,
+} from "@mantine/core";
 import { Stack } from "@mantine/core";
 import { useState } from "react";
 import { RunPayload } from "~/types";
 import { DatePickerInput } from "@mantine/dates";
-import { IconTrash } from "@tabler/icons-react";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { useAddMultipleRuns } from "~/hooks/runs";
 
 export function CreatePlanModal({
   opened,
@@ -14,23 +25,63 @@ export function CreatePlanModal({
 }) {
   const [runs, setRuns] = useState<RunPayload[]>([]);
 
+  const addMultipleRuns = useAddMultipleRuns();
+
   const addRun = () => {
-    setRuns([...runs, { run_length: 0, run_date: new Date().toISOString() }]);
+    setRuns([...runs, { run_length: 5, run_date: new Date().toISOString() }]);
   };
 
   const removeRun = (run: RunPayload) => {
     setRuns(runs.filter((r) => r.run_date !== run.run_date));
   };
 
+  const handleSubmit = () => {
+    addMultipleRuns.mutate(
+      {
+        data: runs,
+      },
+      {
+        onSuccess: () => {
+          onClose();
+          setRuns([]);
+        },
+      }
+    );
+  };
+
   return (
-    <Modal opened={opened} onClose={onClose} title="Create Plan" size="lg">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={
+        <Text fw="bold" fz="lg">
+          Create Plan
+        </Text>
+      }
+      size="lg"
+    >
+      <Divider p="xs" />
       <Card>
-        <Card.Section withBorder>
-          <Stack>
+        <Card.Section withBorder pb="xs">
+          <Stack gap="xs">
+            <Group>
+              <Text fw="bold" fz="sm">
+                Distance (KM)
+              </Text>
+              <Text fw="bold" fz="sm" ml="xl">
+                Date
+              </Text>
+            </Group>
             {runs.map((run) => (
               <RunCard key={run.run_date} run={run} onRemove={removeRun} />
             ))}
-            <Button onClick={addRun} variant="light" w="100%" mb="xs">
+            <Button
+              onClick={addRun}
+              variant="light"
+              w="100%"
+              my="xs"
+              rightSection={<IconPlus size={16} />}
+            >
               Add run
             </Button>
           </Stack>
@@ -40,7 +91,11 @@ export function CreatePlanModal({
             <Button onClick={onClose} variant="default">
               Cancel
             </Button>
-            <Button onClick={onClose} variant="primary">
+            <Button
+              onClick={handleSubmit}
+              variant="primary"
+              loading={addMultipleRuns.isPending}
+            >
               Create Plan
             </Button>
           </Group>
@@ -62,20 +117,19 @@ function RunCard({
 
   return (
     <Card key={run.run_date} p="0">
-      <Group wrap="nowrap">
+      <Group wrap="nowrap" gap="xs">
         <NumberInput
           value={runLength}
-          min={0}
-          max={100}
+          placeholder="Run length"
           onChange={(value) => setRunLength(value as number)}
         />
         <DatePickerInput
           value={runDate}
-          w="100%"
           onChange={(value) => setRunDate(value as unknown as Date)}
+          w="100%"
         />
-        <ActionIcon onClick={() => onRemove(run)}>
-          <IconTrash />
+        <ActionIcon onClick={() => onRemove(run)} color="red" variant="light">
+          <IconTrash size={16} />
         </ActionIcon>
       </Group>
     </Card>

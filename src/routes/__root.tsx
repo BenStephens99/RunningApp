@@ -109,15 +109,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           <AppShell bg="gray.0" header={{ height: 60 }}>
             <AppShell.Header py="xs">
-              <Group w="100%" maw={"1200px"} mx="auto" justify="space-between">
-                <Group>
-                  <Button component={Link} to="/">
-                    Home
-                  </Button>
-                  <Button component={Link} to="/posts">
-                    Posts
-                  </Button>
-                </Group>
+              <Group w="100%" maw={"1200px"} mx="auto" justify="end">
                 <Group>
                   {user ? (
                     <Group>

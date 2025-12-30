@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAddRun, useDeleteRun, useGetRuns } from "~/hooks/runs";
 import { CreatePlanModal } from "~/components/CreatePlanModal";
 import { useDisclosure } from "@mantine/hooks";
+import { IconPencil } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/_authed/")({
   component: Home,
@@ -29,7 +30,15 @@ function Home() {
       ))}
       {runs.data?.length === 0 ? (
         <>
-          <Button mt="20vh" w="fit-content" mx="auto" size="lg" onClick={open}>
+          <Button
+            mt="20vh"
+            w="fit-content"
+            mx="auto"
+            size="lg"
+            onClick={open}
+            radius="xl"
+            rightSection={<IconPencil size={24} />}
+          >
             Create plan
           </Button>
           <CreatePlanModal opened={opened} onClose={close} />
