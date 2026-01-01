@@ -31,6 +31,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../utils/queryClient";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
+import { Footer } from "~/components/Footer";
+import { EditingProvider } from "~/contexts/EditingContext";
 
 export const Route = createRootRoute({
   beforeLoad: async () => {
@@ -112,39 +114,43 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <MantineProvider theme={theme}>
         <QueryClientProvider client={queryClient}>
-          <AppShell bg="gray.0" header={{ height: 60 }}>
-            <AppShell.Header py="xs">
-              <Group w="100%" maw={"1200px"} mx="auto" justify="end">
-                <Group>
-                  {user ? (
-                    <Group>
-                      <Text>{user.email}</Text>
-                      <Button component={Link} to="/logout">
-                        Logout
+          <EditingProvider>
+            <AppShell
+              bg="gray.0"
+              header={{ height: 60 }}
+              footer={{ height: 60 }}
+            >
+              <AppShell.Header>
+                <Group w="100%" maw={"1200px"} mx="auto" p="xs" justify="end">
+                  <Group>
+                    {user ? (
+                      <Group>
+                        <Text>{user.email}</Text>
+                        <Button component={Link} to="/logout">
+                          Logout
+                        </Button>
+                      </Group>
+                    ) : (
+                      <Button component={Link} to="/login">
+                        Login
                       </Button>
-                    </Group>
-                  ) : (
-                    <Button component={Link} to="/login">
-                      Login
-                    </Button>
-                  )}
+                    )}
+                  </Group>
                 </Group>
-              </Group>
-            </AppShell.Header>
-            <AppShell.Main w="100%" maw={"1200px"} mx="auto">
-              <Box my="md" h="100%">
-                {children}
-              </Box>
-            </AppShell.Main>
-            <AppShell.Footer py="xs">
-              <Group w="100%" maw={"1200px"} mx="auto">
-                <Text>Footer</Text>
-              </Group>
-            </AppShell.Footer>
-          </AppShell>
-          <TanStackRouterDevtools position="bottom-right" />
-          <ReactQueryDevtools buttonPosition="bottom-right" />
-          <Scripts />
+              </AppShell.Header>
+              <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
+                <Box my="md" h="100%">
+                  {children}
+                </Box>
+              </AppShell.Main>
+              <AppShell.Footer>
+                <Footer />
+              </AppShell.Footer>
+            </AppShell>
+            <TanStackRouterDevtools position="bottom-right" />
+            <ReactQueryDevtools buttonPosition="bottom-right" />
+            <Scripts />
+          </EditingProvider>
         </QueryClientProvider>
       </MantineProvider>
     </html>
