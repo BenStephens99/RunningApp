@@ -25,14 +25,18 @@ import {
   Group,
   MantineProvider,
   Text,
+  Skeleton,
 } from "@mantine/core";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../utils/queryClient";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
-import { Footer } from "~/components/Footer";
 import { EditingProvider } from "~/contexts/EditingContext";
+
+const Footer = React.lazy(() =>
+  import("~/components/Footer").then((mod) => ({ default: mod.Footer }))
+);
 
 export const Route = createRootRoute({
   beforeLoad: async () => {
@@ -144,7 +148,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 </Box>
               </AppShell.Main>
               <AppShell.Footer>
-                <Footer />
+                <React.Suspense fallback={<Skeleton height={60} />}>
+                  <Footer />
+                </React.Suspense>
               </AppShell.Footer>
             </AppShell>
             <TanStackRouterDevtools position="bottom-right" />
