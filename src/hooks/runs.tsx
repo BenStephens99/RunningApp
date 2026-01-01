@@ -1,6 +1,12 @@
 import { useInvalidateMutation } from "./useInvalidateMutation";
 import { useServerFn } from "@tanstack/react-start";
-import { addMultipleRuns, addRun, deleteRun, getRuns } from "~/serverFunctions";
+import {
+  addMultipleRuns,
+  addRun,
+  deleteRun,
+  getRuns,
+  updateRun,
+} from "~/serverFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { useQuery } from "@tanstack/react-query";
 
@@ -21,6 +27,13 @@ export function useGetRuns() {
 export function useDeleteRun() {
   return useInvalidateMutation({
     mutationFn: useServerFn(deleteRun),
+    queryKey: QueryCacheKeys.runs(),
+  });
+}
+
+export function useUpdateRun() {
+  return useInvalidateMutation({
+    mutationFn: useServerFn(updateRun),
     queryKey: QueryCacheKeys.runs(),
   });
 }

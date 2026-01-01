@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import * as React from "react";
+import { createTheme } from "@mantine/core";
 import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import appCss from "../styles/app.css?url";
@@ -100,12 +101,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const { user } = Route.useRouteContext();
   queryClient.setQueryData(QueryCacheKeys.user(), user);
 
+  const theme = createTheme({
+    cursorType: "pointer",
+  });
+
   return (
     <html>
       <head>
         <HeadContent />
       </head>
-      <MantineProvider>
+      <MantineProvider theme={theme}>
         <QueryClientProvider client={queryClient}>
           <AppShell bg="gray.0" header={{ height: 60 }}>
             <AppShell.Header py="xs">

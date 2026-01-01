@@ -19,20 +19,33 @@ import { useAddMultipleRuns } from "~/hooks/runs";
 export function CreatePlanModal({
   opened,
   onClose,
+  addMode,
 }: {
   opened: boolean;
   onClose: () => void;
+  addMode: boolean;
 }) {
   const [runs, setRuns] = useState<RunPayload[]>([]);
 
   const addMultipleRuns = useAddMultipleRuns();
 
   const addRun = () => {
-    setRuns([...runs, { run_length: 5, run_date: new Date().toISOString() }]);
+    setRuns([
+      ...runs,
+      {
+        run_length: 5,
+        run_date: new Date().toISOString(),
+        completed: false,
+      },
+    ]);
   };
 
-  const removeRun = (run: RunPayload) => {
-    setRuns(runs.filter((r) => r.run_date !== run.run_date));
+  const removeRun = (index: number) => {
+    setRuns(runs.filter((_, i) => i !== index));
+  };
+
+  const updateRun = (index: number, updates: Partial<RunPayload>) => {
+    setRuns(runs.map((run, i) => (i === index ? { ...run, ...updates } : run)));
   };
 
   const handleSubmit = () => {
@@ -55,7 +68,7 @@ export function CreatePlanModal({
       onClose={onClose}
       title={
         <Text fw="bold" fz="lg">
-          Create Plan
+          {addMode ? "Add Runs" : "Create Plan"}
         </Text>
       }
       size="lg"
@@ -72,8 +85,13 @@ export function CreatePlanModal({
                 Date
               </Text>
             </Group>
-            {runs.map((run) => (
-              <RunCard key={run.run_date} run={run} onRemove={removeRun} />
+            {runs.map((run, index) => (
+              <RunCard
+                key={index}
+                run={run}
+                onRemove={() => removeRun(index)}
+                onUpdate={(updates) => updateRun(index, updates)}
+              />
             ))}
             <Button
               onClick={addRun}
@@ -96,7 +114,7 @@ export function CreatePlanModal({
               variant="primary"
               loading={addMultipleRuns.isPending}
             >
-              Create Plan
+              {addMode ? "Add Runs" : "Create Plan"}
             </Button>
           </Group>
         </Card.Section>
@@ -108,27 +126,38 @@ export function CreatePlanModal({
 function RunCard({
   run,
   onRemove,
+  onUpdate,
 }: {
   run: RunPayload;
-  onRemove: (run: RunPayload) => void;
+  onRemove: () => void;
+  onUpdate: (updates: Partial<RunPayload>) => void;
 }) {
   const [runLength, setRunLength] = useState(run.run_length);
   const [runDate, setRunDate] = useState(new Date(run.run_date));
 
   return (
-    <Card key={run.run_date} p="0">
+    <Card p="0">
       <Group wrap="nowrap" gap="xs">
         <NumberInput
           value={runLength}
           placeholder="Run length"
-          onChange={(value) => setRunLength(value as number)}
+          onChange={(value) => {
+            setRunLength(value as number);
+            onUpdate({ run_length: value as number });
+          }}
         />
         <DatePickerInput
           value={runDate}
-          onChange={(value) => setRunDate(value as unknown as Date)}
+          onChange={(date) => {
+            if (date) {
+              const dateObj = new Date(date as Date | string);
+              setRunDate(dateObj);
+              onUpdate({ run_date: dateObj.toISOString() });
+            }
+          }}
           w="100%"
         />
-        <ActionIcon onClick={() => onRemove(run)} color="red" variant="light">
+        <ActionIcon onClick={onRemove} color="red" variant="light">
           <IconTrash size={16} />
         </ActionIcon>
       </Group>

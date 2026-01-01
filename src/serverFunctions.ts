@@ -73,7 +73,10 @@ export const signup = createServerFn({ method: "POST" })
 
 export const getRuns = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase.from("runs").select("*");
+  const { data, error } = await supabase
+    .from("runs")
+    .select("*")
+    .order("run_date", { ascending: true });
   if (error) throw error;
   return data;
 });
@@ -104,6 +107,29 @@ export const addRun = createServerFn({ method: "POST" })
 
     if (error) throw error;
     return row as Run;
+  });
+
+export const updateRun = createServerFn({ method: "POST" })
+  .inputValidator(
+    (d: {
+      id: string;
+      completed: boolean;
+      run_length: number;
+      run_date: string;
+    }) => d
+  )
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const { error } = await supabase
+      .from("runs")
+      .update({
+        completed: data.completed,
+        run_length: data.run_length,
+        run_date: data.run_date,
+      })
+      .eq("id", data.id);
+    if (error) throw error;
+    return data;
   });
 
 export const addMultipleRuns = createServerFn({ method: "POST" })
