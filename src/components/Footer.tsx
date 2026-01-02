@@ -12,7 +12,7 @@ export function Footer() {
 
   return (
     <>
-      <AppShell.Footer py="xs">
+      <AppShell.Footer py="md">
         {user && (
           <Group
             w="100%"
@@ -24,21 +24,21 @@ export function Footer() {
           >
             <ActionIcon
               variant={isEditing ? "filled" : "light"}
-              size="lg"
+              size="xl"
               onClick={toggleEditing}
               radius="xl"
             >
-              <IconPencil size={24} />
+              <IconPencil size={30} />
             </ActionIcon>
             <ActionIcon
               w="fit-content"
-              size="lg"
+              size="xl"
               onClick={() => {
                 open();
               }}
               radius="xl"
             >
-              <IconPlus size={24} />
+              <IconPlus size={30} />
             </ActionIcon>
           </Group>
         )}

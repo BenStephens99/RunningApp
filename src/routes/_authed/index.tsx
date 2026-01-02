@@ -7,6 +7,7 @@ import {
   ActionIcon,
   Checkbox,
   Title,
+  ThemeIcon,
 } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
 import { useDeleteRun, useGetRuns } from "~/hooks/runs";
@@ -115,7 +116,7 @@ function Home() {
                     borderWidth: isNextRun ? 2 : 1,
                   }}
                 >
-                  <Group>
+                  <Group gap="xs">
                     <Checkbox
                       size="lg"
                       checked={run.completed}
@@ -132,12 +133,12 @@ function Home() {
                         });
                       }}
                     />
-                    <IconRun size={60} />
-                    <Stack gap="sm">
-                      <Text>
+                    <IconRun size={30} color="var(--mantine-color-gray-6)" />
+                    <Stack gap="4px">
+                      <Text fz="sm">
                         {dayjs(run.run_date).format("dddd, DD MMMM YYYY")}
                       </Text>
-                      <Text fw="bold" fz="lg">
+                      <Text fw="bold" fz="md">
                         {run.run_length} km
                       </Text>
                     </Stack>

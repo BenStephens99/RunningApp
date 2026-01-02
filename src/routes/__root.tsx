@@ -122,7 +122,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <AppShell
               bg="gray.0"
               header={{ height: 60 }}
-              footer={{ height: 60 }}
+              footer={{ height: 70 }}
             >
               <AppShell.Header>
                 <Group w="100%" maw={"1200px"} mx="auto" p="xs" justify="end">
