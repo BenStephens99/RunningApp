@@ -93,7 +93,7 @@ export function EditRunModal({
         <DatePickerInput
           label="Date"
           value={runDate}
-          onChange={setRunDate}
+          onChange={(date) => setRunDate(date)}
           placeholder="Select date"
           w="100%"
         />
