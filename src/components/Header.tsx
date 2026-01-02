@@ -73,7 +73,7 @@ export function Header() {
             <Menu shadow="md" width={200}>
               <Menu.Target>
                 {isStravaConnected && stravaAthlete?.profile ? (
-                  <ActionIcon variant="light" size="lg" radius="xl">
+                  <Box style={{ position: "relative", cursor: "pointer" }}>
                     <Avatar
                       src={stravaAthlete.profile}
                       alt="Strava profile"
@@ -84,7 +84,19 @@ export function Header() {
                       }}
                       variant="outline"
                     />
-                  </ActionIcon>
+                    <IconBrandStrava
+                      size={20}
+                      color="var(--mantine-color-orange-6)"
+                      style={{
+                        position: "absolute",
+                        bottom: -4,
+                        right: -4,
+                        backgroundColor: "var(--mantine-color-orange-0)",
+                        borderRadius: "50%",
+                        padding: 2,
+                      }}
+                    />
+                  </Box>
                 ) : (
                   <ActionIcon variant="light" size="lg" color="orange">
                     <IconBrandStrava size={20} />
