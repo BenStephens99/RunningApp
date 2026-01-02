@@ -4,7 +4,4 @@ export default defineNitroConfig({
   externals: {
     inline: ["@tabler/icons-react"],
   },
-  experimental: {
-    wasm: true,
-  },
 });
