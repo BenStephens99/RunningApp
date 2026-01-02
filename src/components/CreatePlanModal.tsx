@@ -10,7 +10,7 @@ import {
   Box,
 } from "@mantine/core";
 import { Stack } from "@mantine/core";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RunPayload } from "~/types";
 import { DatePickerInput } from "@mantine/dates";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
@@ -28,6 +28,21 @@ export function CreatePlanModal({
   const [runs, setRuns] = useState<RunPayload[]>([]);
 
   const addMultipleRuns = useAddMultipleRuns();
+
+  // Initialize with one empty run when modal opens
+  useEffect(() => {
+    if (opened) {
+      setRuns([
+        {
+          run_length: 5,
+          run_date: new Date().toISOString(),
+        },
+      ]);
+    } else {
+      // Reset when modal closes
+      setRuns([]);
+    }
+  }, [opened]);
 
   const addRun = () => {
     setRuns([
@@ -99,7 +114,7 @@ export function CreatePlanModal({
               my="xs"
               rightSection={<IconPlus size={16} />}
             >
-              Add run
+              Add another
             </Button>
           </Stack>
         </Card.Section>
