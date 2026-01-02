@@ -1,9 +1,9 @@
 import { useServerFn } from "@tanstack/react-start";
-import { getUser, login, signup } from "~/serverFunctions";
+import { getUser, login, signup, signInWithGoogle } from "~/serverFunctions";
 import { useRouter } from "@tanstack/react-router";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { useInvalidateMutation } from "./useInvalidateMutation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 export function useGetUser() {
   return useQuery({
@@ -34,5 +34,20 @@ export function useSignup() {
   return useInvalidateMutation({
     mutationFn: useServerFn(signup),
     queryKey: QueryCacheKeys.user(),
+  });
+}
+
+export function useGoogleLogin() {
+  const googleSignInFn = useServerFn(signInWithGoogle);
+
+  return useInvalidateMutation({
+    mutationFn: googleSignInFn,
+    queryKey: QueryCacheKeys.user(),
+    onSuccess: (data) => {
+      console.log("data", data);
+      if (data && "url" in data && data.url) {
+        window.location.href = data.url;
+      }
+    },
   });
 }

@@ -71,6 +71,50 @@ export const signup = createServerFn({ method: "POST" })
     });
   });
 
+export const signInWithGoogle = createServerFn({ method: "POST" }).handler(
+  async () => {
+    const supabase = getSupabaseServerClient();
+
+    const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+    const redirectTo = `${baseUrl}/auth-callback`;
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+      },
+    });
+
+    if (error) {
+      return {
+        error: true,
+        message: error.message,
+      };
+    }
+
+    return {
+      url: data.url,
+    };
+  }
+);
+
+export const handleGoogleCallback = createServerFn({ method: "POST" })
+  .inputValidator((d: { code: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+
+    const { error } = await supabase.auth.exchangeCodeForSession(data.code);
+
+    if (error) {
+      return {
+        error: true,
+        message: error.message,
+      };
+    }
+
+    return { success: true };
+  });
+
 export const getRuns = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
