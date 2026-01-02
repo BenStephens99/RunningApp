@@ -14,11 +14,16 @@ import {
   getStravaActivities,
   getStravaAccessToken,
 } from "~/serverFunctions";
-import { StravaActivity } from "~/types";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { IconAlertCircle } from "@tabler/icons-react";
+import { IconAlertCircle, IconClock, IconRun } from "@tabler/icons-react";
+import {
+  formatDistance,
+  formatTimeShort,
+  formatPace,
+} from "~/utils/formatting";
+import styles from "./StravaActivityModal.module.css";
 
 export function StravaActivityModal({
   opened,
@@ -87,19 +92,6 @@ export function StravaActivityModal({
     onClose();
   };
 
-  const formatDistance = (meters: number) => {
-    return (meters / 1000).toFixed(2);
-  };
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-  };
-
   return (
     <Modal
       opened={opened}
@@ -164,37 +156,55 @@ export function StravaActivityModal({
                 Strava account.
               </Alert>
             ) : (
-              <Stack gap="xs">
+              <Stack gap="sm">
                 {activities.map((activity) => (
                   <Card
                     key={activity.id}
                     shadow="xs"
                     padding="sm"
-                    style={{ cursor: "pointer" }}
+                    className={styles.activityCard}
                     onClick={() => handleSelectActivity(activity.id)}
                     withBorder
                   >
                     <Stack gap="xs">
-                      <Text fw="bold" fz="sm">
-                        {activity.name || "Untitled Activity"}
-                      </Text>
-                      <Group gap="md">
-                        <Text fz="xs" c="dimmed">
+                      <Group align="center" gap="xs">
+                        <Text fz="sm" fw="bold">
                           {dayjs(activity.start_date).format(
                             "MMM DD, YYYY HH:mm"
                           )}
                         </Text>
+                        -
                         <Text fz="xs" c="dimmed">
-                          {formatDistance(activity.distance)} km
+                          {activity.name || "Untitled Activity"}
                         </Text>
-                        <Text fz="xs" c="dimmed">
-                          {formatTime(activity.moving_time)}
-                        </Text>
-                        {activity.type && (
-                          <Text fz="xs" c="dimmed">
-                            {activity.type}
+                      </Group>
+                      <Group gap="md">
+                        <Group gap="xs" align="center">
+                          <Group gap="4px" align="center">
+                            <IconClock
+                              size={14}
+                              color="var(--mantine-color-gray-6)"
+                            />
+                            <Text fz="sm" c="dimmed">
+                              {formatTimeShort(activity.moving_time)}
+                            </Text>
+                          </Group>
+                          <IconRun
+                            size={14}
+                            color="var(--mantine-color-gray-6)"
+                          />
+                          <Text fz="sm" c="dimmed">
+                            {formatDistance(activity.distance)} km
                           </Text>
-                        )}
+                        </Group>
+                        <Group gap="4px" align="center">
+                          <Text fz="sm" c="dimmed">
+                            {formatPace(
+                              activity.distance,
+                              activity.moving_time
+                            )}
+                          </Text>
+                        </Group>
                       </Group>
                     </Stack>
                   </Card>

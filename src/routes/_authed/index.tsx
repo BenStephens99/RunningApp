@@ -29,6 +29,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getStravaActivities } from "~/serverFunctions";
 import { useQuery } from "@tanstack/react-query";
 import { StravaActivity } from "~/types";
+import { formatDistance, formatTime, formatPace } from "~/utils/formatting";
 
 export const Route = createFileRoute("/_authed/")({
   component: Home,
@@ -122,20 +123,37 @@ function Home() {
     }
   }, [runs.data, nextRunId]);
 
-  // Helper function to format time
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  // Auto-link Strava activities to runs on the same day
+  useEffect(() => {
+    if (!stravaActivities || !runs.data || runs.data.length === 0) {
+      return;
     }
-    return `${minutes}:${secs.toString().padStart(2, "0")}`;
-  };
 
-  const formatDistance = (meters: number) => {
-    return (meters / 1000).toFixed(2);
-  };
+    // Find runs without strava_link and try to match them with activities
+    const unlinkedRuns = runs.data.filter((run) => !run.strava_link);
+
+    unlinkedRuns.forEach((run) => {
+      const runDate = dayjs(run.run_date).startOf("day");
+
+      // Find a matching activity on the same day
+      const matchingActivity = stravaActivities.find((activity) => {
+        const activityDate = dayjs(activity.start_date).startOf("day");
+        return activityDate.isSame(runDate, "day");
+      });
+
+      if (matchingActivity) {
+        // Auto-link the activity to the run
+        updateRun.mutate({
+          data: {
+            id: run.id,
+            run_length: run.run_length,
+            run_date: run.run_date,
+            strava_link: matchingActivity.id.toString(),
+          },
+        });
+      }
+    });
+  }, [stravaActivities, runs.data, updateRun]);
 
   return (
     <Stack>
@@ -205,15 +223,17 @@ function Home() {
                     >
                       <IconBrandStrava size={20} />
                     </ActionIcon>
-                    <Text fw="bold" fz="md">
-                      {run.run_length} km
-                    </Text>
-                    <Stack gap="4px">
-                      <Text fz="sm">
-                        {dayjs(run.run_date).format("dddd, DD MMMM YYYY")}
-                      </Text>
+                    <Stack gap="xs">
                       <Group>
-                        {stravaActivity && (
+                        <Text fw="bold" fz="md">
+                          {run.run_length} km
+                        </Text>
+                        <Text fz="sm">
+                          {dayjs(run.run_date).format("dddd, DD MMMM YYYY")}
+                        </Text>
+                      </Group>
+                      {stravaActivity && (
+                        <Group>
                           <Group>
                             <Group gap="2px" align="center">
                               <IconClock
@@ -233,9 +253,15 @@ function Home() {
                                 {formatDistance(stravaActivity.distance)} km
                               </Text>
                             </Group>
+                            <Text fz="sm" c="dimmed">
+                              {formatPace(
+                                stravaActivity.distance,
+                                stravaActivity.moving_time
+                              )}
+                            </Text>
                           </Group>
-                        )}
-                      </Group>
+                        </Group>
+                      )}
                     </Stack>
                     <Group ml="auto">
                       {editMode && (
