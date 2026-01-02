@@ -104,7 +104,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       ActionIcon: {
         defaultProps: {
           bg: "indigo.0",
-          color: "blue",
+          color: "indigo.9",
           variant: "light",
         },
       },

@@ -205,6 +205,7 @@ function Home() {
                       variant={run.strava_link ? "filled" : "light"}
                       size="lg"
                       color={run.strava_link ? "green" : "orange"}
+                      bg={run.strava_link ? "green.4" : "orange.0"}
                       onClick={() => {
                         if (run.strava_link && editMode) {
                           // Unlink if in edit mode and already linked

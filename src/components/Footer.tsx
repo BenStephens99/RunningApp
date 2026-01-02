@@ -23,10 +23,11 @@ export function Footer() {
             gap="md"
           >
             <ActionIcon
-              variant={isEditing ? "filled" : "light"}
               size="xl"
               onClick={toggleEditing}
               radius="xl"
+              bg={isEditing ? "indigo.9" : "indigo.0"}
+              color={isEditing ? "indigo.1" : "indigo.9"}
             >
               <IconPencil size={30} />
             </ActionIcon>
