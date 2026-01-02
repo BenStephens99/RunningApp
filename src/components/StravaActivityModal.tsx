@@ -32,6 +32,7 @@ import {
 } from "~/utils/formatting";
 import styles from "./StravaActivityModal.module.css";
 import { Run } from "~/types";
+import { QueryCacheKeys } from "~/QueryCacheKeys";
 
 export function StravaActivityModal({
   opened,
@@ -51,31 +52,28 @@ export function StravaActivityModal({
   const getActivities = useServerFn(getStravaActivities);
   const getToken = useServerFn(getStravaAccessToken);
 
-  // Check if user has Strava connected
   const {
     data: tokenData,
     isLoading: tokenLoading,
     refetch: refetchToken,
   } = useQuery({
-    queryKey: ["strava-token"],
+    queryKey: QueryCacheKeys.stravaToken(),
     queryFn: () => getToken(),
     enabled: opened,
   });
 
-  // Refetch token when modal opens (in case user just connected)
   useEffect(() => {
     if (opened) {
       refetchToken();
     }
   }, [opened, refetchToken]);
 
-  // Fetch activities if token exists (limited to 20 for modal)
   const {
     data: activities,
     isLoading: activitiesLoading,
     error: activitiesError,
   } = useQuery({
-    queryKey: ["strava-activities-modal"],
+    queryKey: QueryCacheKeys.stravaActivities(),
     queryFn: () => getActivities({ data: 20 }),
     enabled: opened && tokenData?.hasToken === true,
   });

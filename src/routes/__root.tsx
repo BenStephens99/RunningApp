@@ -70,6 +70,23 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      {
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+        href: "/apple-touch-icon.png",
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        sizes: "32x32",
+        href: "/favicon-32x32.png",
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        sizes: "16x16",
+        href: "/favicon-16x16.png",
+      },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
       { rel: "shortcut icon", type: "image/x-icon", href: "/favicon.ico" },
@@ -136,11 +153,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           <EditingProvider>
             <AppShell
-              bg="gray.0"
+              bg="indigo.0"
               header={{ height: 60 }}
-              footer={{ height: 76 }}
+              footer={{ height: 80 }}
             >
-              <AppShell.Header bg="indigo.3">
+              <AppShell.Header bg="indigo.4">
                 <Header />
               </AppShell.Header>
               <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
@@ -148,7 +165,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                   {children}
                 </Box>
               </AppShell.Main>
-              <AppShell.Footer>
+              <AppShell.Footer bg="indigo.4">
                 <React.Suspense fallback={<Skeleton height={60} />}>
                   <Footer />
                 </React.Suspense>

@@ -170,7 +170,13 @@ function Home() {
     <Stack>
       {groupedRuns.map(({ weekNumber, runs: weekRuns }) => (
         <Stack key={weekNumber} gap="sm">
-          <Title order={4} mt={weekNumber === 1 ? 0 : "md"} c="dimmed">
+          <Title
+            order={4}
+            mt={weekNumber === 1 ? 0 : "md"}
+            c="dimmed"
+            tt="uppercase"
+            fz="sm"
+          >
             Week {weekNumber}
           </Title>
           {weekRuns.map((run) => {

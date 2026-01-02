@@ -186,7 +186,9 @@ async function getStravaTokenHelper() {
   // Try to get token from user_profiles table
   const { data: profile, error } = await supabase
     .from("user_profiles")
-    .select("strava_access_token, strava_refresh_token, strava_token_expires_at")
+    .select(
+      "strava_access_token, strava_refresh_token, strava_token_expires_at"
+    )
     .eq("user_id", user.id)
     .single();
 
@@ -263,7 +265,9 @@ export const getStravaAuthUrl = createServerFn({ method: "GET" }).handler(
       throw new Error("Strava client ID not configured");
     }
 
-    const redirectUri = process.env.STRAVA_REDIRECT_URI || "http://localhost:3000/strava-callback";
+    const redirectUri =
+      process.env.STRAVA_REDIRECT_URI ||
+      "http://localhost:3000/strava-callback";
     const scope = "activity:read";
     const state = user.id; // Use user ID as state for security
 
@@ -287,7 +291,9 @@ export const handleStravaCallback = createServerFn({ method: "POST" })
 
     const clientId = process.env.STRAVA_CLIENT_ID;
     const clientSecret = process.env.STRAVA_CLIENT_SECRET;
-    const redirectUri = process.env.STRAVA_REDIRECT_URI || "http://localhost:3000/strava-callback";
+    const redirectUri =
+      process.env.STRAVA_REDIRECT_URI ||
+      "http://localhost:3000/strava-callback";
 
     if (!clientId || !clientSecret) {
       throw new Error("Strava credentials not configured");
@@ -315,19 +321,17 @@ export const handleStravaCallback = createServerFn({ method: "POST" })
     const { access_token, refresh_token, expires_at } = tokenData;
 
     // Store access token in user_profiles table (or create if doesn't exist)
-    const { error: upsertError } = await supabase
-      .from("user_profiles")
-      .upsert(
-        {
-          user_id: user.id,
-          strava_access_token: access_token,
-          strava_refresh_token: refresh_token,
-          strava_token_expires_at: expires_at
-            ? new Date(expires_at * 1000).toISOString()
-            : null,
-        },
-        { onConflict: "user_id" }
-      );
+    const { error: upsertError } = await supabase.from("user_profiles").upsert(
+      {
+        user_id: user.id,
+        strava_access_token: access_token,
+        strava_refresh_token: refresh_token,
+        strava_token_expires_at: expires_at
+          ? new Date(expires_at * 1000).toISOString()
+          : null,
+      },
+      { onConflict: "user_id" }
+    );
 
     if (upsertError) {
       // If table doesn't exist, we'll handle it gracefully
@@ -350,7 +354,9 @@ export const getStravaActivities = createServerFn({ method: "GET" })
     // Get access token
     const tokenResult = await getStravaTokenHelper();
     if (!tokenResult.hasToken || !tokenResult.accessToken) {
-      throw new Error("No Strava access token. Please connect your Strava account.");
+      throw new Error(
+        "No Strava access token. Please connect your Strava account."
+      );
     }
 
     // Use limit if provided, otherwise default to 100
@@ -373,3 +379,58 @@ export const getStravaActivities = createServerFn({ method: "GET" })
     const activities: StravaActivity[] = await activitiesResponse.json();
     return activities;
   });
+
+export const getStravaAthlete = createServerFn({ method: "GET" }).handler(
+  async () => {
+    // Get access token
+    const tokenResult = await getStravaTokenHelper();
+    if (!tokenResult.hasToken || !tokenResult.accessToken) {
+      throw new Error(
+        "No Strava access token. Please connect your Strava account."
+      );
+    }
+
+    // Fetch athlete profile from Strava
+    const athleteResponse = await fetch(
+      "https://www.strava.com/api/v3/athlete",
+      {
+        headers: {
+          Authorization: `Bearer ${tokenResult.accessToken}`,
+        },
+      }
+    );
+
+    if (!athleteResponse.ok) {
+      throw new Error("Failed to fetch Strava athlete profile");
+    }
+
+    const athlete = await athleteResponse.json();
+    return athlete;
+  }
+);
+
+export const disconnectStrava = createServerFn({ method: "POST" }).handler(
+  async () => {
+    const supabase = getSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    // Delete the user_profiles row for this user
+    const { error } = await supabase
+      .from("user_profiles")
+      .delete()
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Error disconnecting Strava:", error);
+      throw new Error("Failed to disconnect Strava account");
+    }
+
+    return { success: true };
+  }
+);

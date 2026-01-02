@@ -12,38 +12,37 @@ export function Footer() {
 
   return (
     <>
-      <AppShell.Footer py="md" bg="indigo.3">
-        {user && (
-          <Group
-            w="100%"
-            maw={"1200px"}
-            mx="auto"
-            px="xs"
-            justify="center"
-            gap="md"
+      {user && (
+        <Group
+          py="md"
+          w="100%"
+          maw={"1200px"}
+          mx="auto"
+          px="xs"
+          justify="center"
+          gap="md"
+        >
+          <ActionIcon
+            size="xl"
+            onClick={toggleEditing}
+            radius="xl"
+            bg={isEditing ? "indigo.9" : "indigo.0"}
+            color={isEditing ? "indigo.1" : "indigo.9"}
           >
-            <ActionIcon
-              size="xl"
-              onClick={toggleEditing}
-              radius="xl"
-              bg={isEditing ? "indigo.9" : "indigo.0"}
-              color={isEditing ? "indigo.1" : "indigo.9"}
-            >
-              <IconPencil size={30} />
-            </ActionIcon>
-            <ActionIcon
-              w="fit-content"
-              size="xl"
-              onClick={() => {
-                open();
-              }}
-              radius="xl"
-            >
-              <IconPlus size={30} />
-            </ActionIcon>
-          </Group>
-        )}
-      </AppShell.Footer>
+            <IconPencil size={30} />
+          </ActionIcon>
+          <ActionIcon
+            w="fit-content"
+            size="xl"
+            onClick={() => {
+              open();
+            }}
+            radius="xl"
+          >
+            <IconPlus size={30} />
+          </ActionIcon>
+        </Group>
+      )}
       <CreatePlanModal opened={opened} onClose={close} addMode={true} />
     </>
   );
