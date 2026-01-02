@@ -4,7 +4,7 @@
   "description": "Create and track your running plans",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#edf2ff",
   "theme_color": "#91a7ff",
   "orientation": "portrait-primary",
   "icons": [

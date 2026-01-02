@@ -71,6 +71,34 @@ export const signup = createServerFn({ method: "POST" })
     });
   });
 
+export const getGoogleAuthUrl = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const supabase = getSupabaseServerClient();
+
+    // Get the base URL - use environment variable or default to localhost
+    const baseUrl = process.env.VITE_APP_URL || "http://localhost:3000";
+
+    const redirectUrl = `${baseUrl}/auth/callback`;
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUrl,
+      },
+    });
+
+    if (error) {
+      throw new Error(`Failed to get Google auth URL: ${error.message}`);
+    }
+
+    if (!data.url) {
+      throw new Error("Failed to get Google auth URL: No URL returned");
+    }
+
+    return { url: data.url };
+  }
+);
+
 export const getRuns = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase

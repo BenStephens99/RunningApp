@@ -25,13 +25,13 @@ export function Header() {
   const disconnect = useServerFn(disconnectStrava);
   const getAthlete = useServerFn(getStravaAthlete);
 
-  const { data: stravaToken } = useQuery({
+  const { data: stravaToken, isLoading: isLoadingStravaToken } = useQuery({
     queryKey: QueryCacheKeys.stravaToken(),
     queryFn: () => getToken(),
     enabled: !!user,
   });
 
-  const { data: stravaAthlete } = useQuery({
+  const { data: stravaAthlete, isLoading: isLoadingStravaAthlete } = useQuery({
     queryKey: QueryCacheKeys.stravaAthlete(),
     queryFn: () => getAthlete(),
     enabled: !!user && stravaToken?.hasToken === true,
@@ -98,7 +98,12 @@ export function Header() {
                     />
                   </Box>
                 ) : (
-                  <ActionIcon variant="light" size="lg" color="orange">
+                  <ActionIcon
+                    variant="light"
+                    size="lg"
+                    color="orange"
+                    loading={isLoadingStravaAthlete || isLoadingStravaToken}
+                  >
                     <IconBrandStrava size={20} />
                   </ActionIcon>
                 )}
