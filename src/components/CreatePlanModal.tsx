@@ -35,7 +35,6 @@ export function CreatePlanModal({
       {
         run_length: 5,
         run_date: new Date().toISOString(),
-        completed: false,
       },
     ]);
   };

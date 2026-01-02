@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StravaCallbackRouteImport } from './routes/strava-callback'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
@@ -18,6 +19,11 @@ import { Route as AuthedPostsRouteImport } from './routes/_authed/posts'
 import { Route as AuthedPostsIndexRouteImport } from './routes/_authed/posts.index'
 import { Route as AuthedPostsPostIdRouteImport } from './routes/_authed/posts.$postId'
 
+const StravaCallbackRoute = StravaCallbackRouteImport.update({
+  id: '/strava-callback',
+  path: '/strava-callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -62,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
+  '/strava-callback': typeof StravaCallbackRoute
   '/posts': typeof AuthedPostsRouteWithChildren
   '/': typeof AuthedIndexRoute
   '/posts/$postId': typeof AuthedPostsPostIdRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
+  '/strava-callback': typeof StravaCallbackRoute
   '/': typeof AuthedIndexRoute
   '/posts/$postId': typeof AuthedPostsPostIdRoute
   '/posts': typeof AuthedPostsIndexRoute
@@ -81,6 +89,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
+  '/strava-callback': typeof StravaCallbackRoute
   '/_authed/posts': typeof AuthedPostsRouteWithChildren
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/posts/$postId': typeof AuthedPostsPostIdRoute
@@ -92,18 +101,27 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/signup'
+    | '/strava-callback'
     | '/posts'
     | '/'
     | '/posts/$postId'
     | '/posts/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/logout' | '/signup' | '/' | '/posts/$postId' | '/posts'
+  to:
+    | '/login'
+    | '/logout'
+    | '/signup'
+    | '/strava-callback'
+    | '/'
+    | '/posts/$postId'
+    | '/posts'
   id:
     | '__root__'
     | '/_authed'
     | '/login'
     | '/logout'
     | '/signup'
+    | '/strava-callback'
     | '/_authed/posts'
     | '/_authed/'
     | '/_authed/posts/$postId'
@@ -115,10 +133,18 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   SignupRoute: typeof SignupRoute
+  StravaCallbackRoute: typeof StravaCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/strava-callback': {
+      id: '/strava-callback'
+      path: '/strava-callback'
+      fullPath: '/strava-callback'
+      preLoaderRoute: typeof StravaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -210,6 +236,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   SignupRoute: SignupRoute,
+  StravaCallbackRoute: StravaCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
