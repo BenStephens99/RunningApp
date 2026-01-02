@@ -1,11 +1,11 @@
 {
-  "name": "Running App",
-  "short_name": "RunningApp",
-  "description": "Track your running activities and link them with Strava",
+  "name": "Run Planner",
+  "short_name": "Run Planner",
+  "description": "Create and track your running plans",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#228be6",
+  "theme_color": "#91a7ff",
   "orientation": "portrait-primary",
   "icons": [
     {

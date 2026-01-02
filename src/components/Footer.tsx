@@ -12,7 +12,7 @@ export function Footer() {
 
   return (
     <>
-      <AppShell.Footer py="md">
+      <AppShell.Footer py="md" bg="indigo.3">
         {user && (
           <Group
             w="100%"

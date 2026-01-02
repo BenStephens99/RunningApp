@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 import {
   HeadContent,
-  Link,
   Outlet,
   Scripts,
   createRootRoute,
@@ -18,21 +17,14 @@ import { getUser } from "../serverFunctions";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 
-import {
-  AppShell,
-  Box,
-  Button,
-  Group,
-  MantineProvider,
-  Text,
-  Skeleton,
-} from "@mantine/core";
+import { AppShell, Box, MantineProvider, Skeleton } from "@mantine/core";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../utils/queryClient";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { EditingProvider } from "~/contexts/EditingContext";
+import { Header } from "~/components/Header";
 
 const Footer = React.lazy(() =>
   import("~/components/Footer").then((mod) => ({ default: mod.Footer }))
@@ -72,32 +64,15 @@ export const Route = createRootRoute({
         content: "Running App",
       },
       ...seo({
-        title:
-          "TanStack Start | Type-Safe, Client-First, Full-Stack React Framework",
-        description: `TanStack Start is a type-safe, client-first, full-stack React framework. `,
+        title: "Run Planner | Create and track your running plans",
+        description: `Run Planner is a tool to create and track your running plans`,
       }),
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      {
-        rel: "apple-touch-icon",
-        sizes: "180x180",
-        href: "/apple-touch-icon.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "32x32",
-        href: "/favicon-32x32.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "16x16",
-        href: "/favicon-16x16.png",
-      },
       { rel: "manifest", href: "/manifest.json" },
-      { rel: "icon", href: "/favicon.ico" },
+      { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+      { rel: "shortcut icon", type: "image/x-icon", href: "/favicon.ico" },
     ],
   }),
   errorComponent: (props) => {
@@ -125,6 +100,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
   const theme = createTheme({
     cursorType: "pointer",
+    components: {
+      ActionIcon: {
+        defaultProps: {
+          bg: "indigo.0",
+          color: "blue",
+          variant: "light",
+        },
+      },
+    },
   });
 
   // Register service worker for PWA
@@ -154,25 +138,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <AppShell
               bg="gray.0"
               header={{ height: 60 }}
-              footer={{ height: 70 }}
+              footer={{ height: 76 }}
             >
-              <AppShell.Header>
-                <Group w="100%" maw={"1200px"} mx="auto" p="xs" justify="end">
-                  <Group>
-                    {user ? (
-                      <Group>
-                        <Text>{user.email}</Text>
-                        <Button component={Link} to="/logout">
-                          Logout
-                        </Button>
-                      </Group>
-                    ) : (
-                      <Button component={Link} to="/login">
-                        Login
-                      </Button>
-                    )}
-                  </Group>
-                </Group>
+              <AppShell.Header bg="indigo.3">
+                <Header />
               </AppShell.Header>
               <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
                 <Box my="md" h="100%">
