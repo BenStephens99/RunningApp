@@ -344,17 +344,21 @@ export const getStravaAccessToken = createServerFn({ method: "GET" }).handler(
   }
 );
 
-export const getStravaActivities = createServerFn({ method: "GET" }).handler(
-  async () => {
+export const getStravaActivities = createServerFn({ method: "GET" })
+  .inputValidator((d?: number) => d)
+  .handler(async ({ data: limit }) => {
     // Get access token
     const tokenResult = await getStravaTokenHelper();
     if (!tokenResult.hasToken || !tokenResult.accessToken) {
       throw new Error("No Strava access token. Please connect your Strava account.");
     }
 
-    // Fetch activities from Strava (increased to 100 for better coverage)
+    // Use limit if provided, otherwise default to 100
+    const perPage = limit || 100;
+
+    // Fetch activities from Strava
     const activitiesResponse = await fetch(
-      "https://www.strava.com/api/v3/athlete/activities?per_page=100",
+      `https://www.strava.com/api/v3/athlete/activities?per_page=${perPage}`,
       {
         headers: {
           Authorization: `Bearer ${tokenResult.accessToken}`,
@@ -368,5 +372,4 @@ export const getStravaActivities = createServerFn({ method: "GET" }).handler(
 
     const activities: StravaActivity[] = await activitiesResponse.json();
     return activities;
-  }
-);
+  });

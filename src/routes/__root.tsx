@@ -55,6 +55,22 @@ export const Route = createRootRoute({
         name: "viewport",
         content: "width=device-width, initial-scale=1",
       },
+      {
+        name: "theme-color",
+        content: "#228be6",
+      },
+      {
+        name: "apple-mobile-web-app-capable",
+        content: "yes",
+      },
+      {
+        name: "apple-mobile-web-app-status-bar-style",
+        content: "default",
+      },
+      {
+        name: "apple-mobile-web-app-title",
+        content: "Running App",
+      },
       ...seo({
         title:
           "TanStack Start | Type-Safe, Client-First, Full-Stack React Framework",
@@ -80,7 +96,7 @@ export const Route = createRootRoute({
         sizes: "16x16",
         href: "/favicon-16x16.png",
       },
-      { rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
+      { rel: "manifest", href: "/manifest.json" },
       { rel: "icon", href: "/favicon.ico" },
     ],
   }),
@@ -110,6 +126,22 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const theme = createTheme({
     cursorType: "pointer",
   });
+
+  // Register service worker for PWA
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((registration) => {
+            console.log("SW registered: ", registration);
+          })
+          .catch((registrationError) => {
+            console.log("SW registration failed: ", registrationError);
+          });
+      });
+    }
+  }, []);
 
   return (
     <html>

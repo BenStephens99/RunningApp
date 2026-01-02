@@ -20,6 +20,7 @@ import {
   IconTrash,
   IconBrandStrava,
   IconClock,
+  IconBrandSpeedtest,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { useUpdateRun } from "~/hooks/runs";
@@ -253,12 +254,18 @@ function Home() {
                                 {formatDistance(stravaActivity.distance)} km
                               </Text>
                             </Group>
-                            <Text fz="sm" c="dimmed">
-                              {formatPace(
-                                stravaActivity.distance,
-                                stravaActivity.moving_time
-                              )}
-                            </Text>
+                            <Group gap="2px" align="center">
+                              <IconBrandSpeedtest
+                                size={14}
+                                color="var(--mantine-color-gray-6)"
+                              />
+                              <Text fz="sm" c="dimmed">
+                                {formatPace(
+                                  stravaActivity.distance,
+                                  stravaActivity.moving_time
+                                )}
+                              </Text>
+                            </Group>
                           </Group>
                         </Group>
                       )}
@@ -317,16 +324,17 @@ function Home() {
             setStravaModalRunId(null);
           }}
           runId={stravaModalRunId}
+          run={runs.data?.find((r) => r.id === stravaModalRunId)}
           onSelect={(activityId) => {
             const run = runs.data?.find((r) => r.id === stravaModalRunId);
             if (run) {
-              // Link the Strava activity (this marks the run as completed)
+              // Link or unlink the Strava activity
               updateRun.mutate({
                 data: {
                   id: run.id,
                   run_length: run.run_length,
                   run_date: run.run_date,
-                  strava_link: activityId.toString(),
+                  strava_link: activityId ? activityId.toString() : null,
                 },
               });
             }

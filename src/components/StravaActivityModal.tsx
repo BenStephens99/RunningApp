@@ -7,6 +7,7 @@ import {
   Group,
   Loader,
   Alert,
+  Table,
 } from "@mantine/core";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -14,27 +15,36 @@ import {
   getStravaActivities,
   getStravaAccessToken,
 } from "~/serverFunctions";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { IconAlertCircle, IconClock, IconRun } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconClock,
+  IconRun,
+  IconCheck,
+  IconBrandSpeedtest,
+} from "@tabler/icons-react";
 import {
   formatDistance,
   formatTimeShort,
   formatPace,
 } from "~/utils/formatting";
 import styles from "./StravaActivityModal.module.css";
+import { Run } from "~/types";
 
 export function StravaActivityModal({
   opened,
   onClose,
   runId,
+  run,
   onSelect,
 }: {
   opened: boolean;
   onClose: () => void;
   runId: string;
-  onSelect: (activityId: number) => void;
+  run?: Run;
+  onSelect: (activityId: number | null) => void;
 }) {
   const [needsAuth, setNeedsAuth] = useState(false);
   const getAuthUrl = useServerFn(getStravaAuthUrl);
@@ -59,16 +69,49 @@ export function StravaActivityModal({
     }
   }, [opened, refetchToken]);
 
-  // Fetch activities if token exists
+  // Fetch activities if token exists (limited to 20 for modal)
   const {
     data: activities,
     isLoading: activitiesLoading,
     error: activitiesError,
   } = useQuery({
-    queryKey: ["strava-activities"],
-    queryFn: () => getActivities(),
+    queryKey: ["strava-activities-modal"],
+    queryFn: () => getActivities({ data: 20 }),
     enabled: opened && tokenData?.hasToken === true,
   });
+
+  // Group activities by date
+  const groupedActivities = useMemo(() => {
+    if (!activities || activities.length === 0) {
+      return { today: [], thisWeek: [], older: [] };
+    }
+
+    const today = dayjs().startOf("day");
+    const weekStart = dayjs().startOf("week");
+
+    const groups = {
+      today: [] as typeof activities,
+      thisWeek: [] as typeof activities,
+      older: [] as typeof activities,
+    };
+
+    activities.forEach((activity) => {
+      const activityDate = dayjs(activity.start_date).startOf("day");
+
+      if (activityDate.isSame(today, "day")) {
+        groups.today.push(activity);
+      } else if (
+        activityDate.isAfter(weekStart) ||
+        activityDate.isSame(weekStart, "day")
+      ) {
+        groups.thisWeek.push(activity);
+      } else {
+        groups.older.push(activity);
+      }
+    });
+
+    return groups;
+  }, [activities]);
 
   useEffect(() => {
     if (tokenData && !tokenData.hasToken) {
@@ -87,8 +130,18 @@ export function StravaActivityModal({
     }
   };
 
+  // Get the currently linked activity ID
+  const selectedActivityId = run?.strava_link
+    ? parseInt(run.strava_link, 10)
+    : null;
+
   const handleSelectActivity = (activityId: number) => {
-    onSelect(activityId);
+    // If clicking on the already selected activity, unlink it
+    if (selectedActivityId === activityId) {
+      onSelect(null);
+    } else {
+      onSelect(activityId);
+    }
     onClose();
   };
 
@@ -147,9 +200,6 @@ export function StravaActivityModal({
 
         {!needsAuth && !tokenLoading && activities && !activitiesLoading && (
           <Stack gap="xs">
-            <Text fw="bold" fz="sm">
-              Select an activity to link:
-            </Text>
             {activities.length === 0 ? (
               <Alert color="yellow">
                 No activities found. Make sure you have activities in your
@@ -157,58 +207,341 @@ export function StravaActivityModal({
               </Alert>
             ) : (
               <Stack gap="sm">
-                {activities.map((activity) => (
-                  <Card
-                    key={activity.id}
-                    shadow="xs"
-                    padding="sm"
-                    className={styles.activityCard}
-                    onClick={() => handleSelectActivity(activity.id)}
-                    withBorder
-                  >
+                {/* Today */}
+                {groupedActivities.today.length > 0 && (
+                  <Stack gap="xs">
+                    <Text fw="bold" fz="sm" c="dimmed">
+                      Today
+                    </Text>
                     <Stack gap="xs">
-                      <Group align="center" gap="xs">
-                        <Text fz="sm" fw="bold">
-                          {dayjs(activity.start_date).format(
-                            "MMM DD, YYYY HH:mm"
-                          )}
-                        </Text>
-                        -
-                        <Text fz="xs" c="dimmed">
-                          {activity.name || "Untitled Activity"}
-                        </Text>
-                      </Group>
-                      <Group gap="md">
-                        <Group gap="xs" align="center">
-                          <Group gap="4px" align="center">
-                            <IconClock
-                              size={14}
-                              color="var(--mantine-color-gray-6)"
-                            />
-                            <Text fz="sm" c="dimmed">
-                              {formatTimeShort(activity.moving_time)}
-                            </Text>
-                          </Group>
-                          <IconRun
-                            size={14}
-                            color="var(--mantine-color-gray-6)"
-                          />
-                          <Text fz="sm" c="dimmed">
-                            {formatDistance(activity.distance)} km
-                          </Text>
-                        </Group>
-                        <Group gap="4px" align="center">
-                          <Text fz="sm" c="dimmed">
-                            {formatPace(
-                              activity.distance,
-                              activity.moving_time
-                            )}
-                          </Text>
-                        </Group>
-                      </Group>
+                      {groupedActivities.today.map((activity) => {
+                        const isSelected = selectedActivityId === activity.id;
+                        return (
+                          <Card
+                            key={activity.id}
+                            shadow="xs"
+                            padding="sm"
+                            className={`${styles.activityCard} ${
+                              isSelected ? styles.activityCardSelected : ""
+                            }`}
+                            onClick={() => handleSelectActivity(activity.id)}
+                            withBorder
+                          >
+                            <Stack gap="xs">
+                              <Group align="center" gap="xs">
+                                {isSelected && (
+                                  <IconCheck
+                                    size={18}
+                                    color="var(--mantine-color-green-6)"
+                                  />
+                                )}
+                                <Text fz="sm" fw="bold">
+                                  {dayjs(activity.start_date).format(
+                                    "MMM DD, YYYY HH:mm"
+                                  )}
+                                </Text>
+                                -
+                                <Text fz="xs" c="dimmed">
+                                  {activity.name || "Untitled Activity"}
+                                </Text>
+                                {isSelected && (
+                                  <Text fz="xs" c="dimmed" fs="italic">
+                                    (Click to unlink)
+                                  </Text>
+                                )}
+                              </Group>
+                              <Table>
+                                <Table.Tbody>
+                                  <Table.Tr>
+                                    <Table.Td>
+                                      <Group gap="xs" align="center">
+                                        <IconClock
+                                          size={18}
+                                          color="var(--mantine-color-gray-6)"
+                                        />
+                                        <Text fz="sm" c="dimmed">
+                                          Time
+                                        </Text>
+                                      </Group>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      <Text fz="sm" c="dimmed">
+                                        {formatTimeShort(activity.moving_time)}
+                                      </Text>
+                                    </Table.Td>
+                                  </Table.Tr>
+                                  <Table.Tr>
+                                    <Table.Td>
+                                      <Group gap="xs" align="center">
+                                        <IconRun
+                                          size={18}
+                                          color="var(--mantine-color-gray-6)"
+                                        />
+                                        <Text fz="sm" c="dimmed">
+                                          Distance
+                                        </Text>
+                                      </Group>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      <Text fz="sm" c="dimmed">
+                                        {formatDistance(activity.distance)} km
+                                      </Text>
+                                    </Table.Td>
+                                  </Table.Tr>
+                                  <Table.Tr>
+                                    <Table.Td>
+                                      <Group gap="xs" align="center">
+                                        <IconBrandSpeedtest
+                                          size={18}
+                                          color="var(--mantine-color-gray-6)"
+                                        />
+                                        <Text fz="sm" c="dimmed">
+                                          Pace
+                                        </Text>
+                                      </Group>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      <Text fz="sm" c="dimmed">
+                                        {formatPace(
+                                          activity.distance,
+                                          activity.moving_time
+                                        )}
+                                      </Text>
+                                    </Table.Td>
+                                  </Table.Tr>
+                                </Table.Tbody>
+                              </Table>
+                            </Stack>
+                          </Card>
+                        );
+                      })}
                     </Stack>
-                  </Card>
-                ))}
+                  </Stack>
+                )}
+
+                {/* This Week */}
+                {groupedActivities.thisWeek.length > 0 && (
+                  <Stack gap="xs">
+                    <Text fw="bold" fz="sm" c="dimmed">
+                      This Week
+                    </Text>
+                    <Stack gap="sm">
+                      {groupedActivities.thisWeek.map((activity) => {
+                        const isSelected = selectedActivityId === activity.id;
+                        return (
+                          <Card
+                            key={activity.id}
+                            shadow="xs"
+                            padding="sm"
+                            className={`${styles.activityCard} ${
+                              isSelected ? styles.activityCardSelected : ""
+                            }`}
+                            onClick={() => handleSelectActivity(activity.id)}
+                            withBorder
+                          >
+                            <Stack gap="xs">
+                              <Group align="center" gap="xs">
+                                {isSelected && (
+                                  <IconCheck
+                                    size={18}
+                                    color="var(--mantine-color-green-6)"
+                                  />
+                                )}
+                                <Text fz="sm" fw="bold">
+                                  {dayjs(activity.start_date).format(
+                                    "MMM DD, YYYY HH:mm"
+                                  )}
+                                </Text>
+                                -
+                                <Text fz="xs" c="dimmed">
+                                  {activity.name || "Untitled Activity"}
+                                </Text>
+                                {isSelected && (
+                                  <Text fz="xs" c="dimmed" fs="italic">
+                                    (Click to unlink)
+                                  </Text>
+                                )}
+                              </Group>
+                              <Table>
+                                <Table.Tbody>
+                                  <Table.Tr>
+                                    <Table.Td>
+                                      <Group gap="xs" align="center">
+                                        <IconClock
+                                          size={18}
+                                          color="var(--mantine-color-gray-6)"
+                                        />
+                                        <Text fz="sm" c="dimmed">
+                                          Time
+                                        </Text>
+                                      </Group>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      <Text fz="sm" c="dimmed">
+                                        {formatTimeShort(activity.moving_time)}
+                                      </Text>
+                                    </Table.Td>
+                                  </Table.Tr>
+                                  <Table.Tr>
+                                    <Table.Td>
+                                      <Group gap="xs" align="center">
+                                        <IconRun
+                                          size={18}
+                                          color="var(--mantine-color-gray-6)"
+                                        />
+                                        <Text fz="sm" c="dimmed">
+                                          Distance
+                                        </Text>
+                                      </Group>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      <Text fz="sm" c="dimmed">
+                                        {formatDistance(activity.distance)} km
+                                      </Text>
+                                    </Table.Td>
+                                  </Table.Tr>
+                                  <Table.Tr>
+                                    <Table.Td>
+                                      <Group gap="xs" align="center">
+                                        <IconBrandSpeedtest
+                                          size={18}
+                                          color="var(--mantine-color-gray-6)"
+                                        />
+                                        <Text fz="sm" c="dimmed">
+                                          Pace
+                                        </Text>
+                                      </Group>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      <Text fz="sm" c="dimmed">
+                                        {formatPace(
+                                          activity.distance,
+                                          activity.moving_time
+                                        )}
+                                      </Text>
+                                    </Table.Td>
+                                  </Table.Tr>
+                                </Table.Tbody>
+                              </Table>
+                            </Stack>
+                          </Card>
+                        );
+                      })}
+                    </Stack>
+                  </Stack>
+                )}
+
+                {/* Older */}
+                {groupedActivities.older.length > 0 && (
+                  <Stack gap="xs">
+                    <Text fw="bold" fz="sm" c="dimmed">
+                      Older
+                    </Text>
+                    <Stack gap="sm">
+                      {groupedActivities.older.map((activity) => {
+                        const isSelected = selectedActivityId === activity.id;
+                        return (
+                          <Card
+                            key={activity.id}
+                            shadow="xs"
+                            padding="sm"
+                            className={`${styles.activityCard} ${
+                              isSelected ? styles.activityCardSelected : ""
+                            }`}
+                            onClick={() => handleSelectActivity(activity.id)}
+                            withBorder
+                          >
+                            <Stack gap="xs">
+                              <Group align="center" gap="xs">
+                                {isSelected && (
+                                  <IconCheck
+                                    size={18}
+                                    color="var(--mantine-color-green-6)"
+                                  />
+                                )}
+                                <Text fz="sm" fw="bold">
+                                  {dayjs(activity.start_date).format(
+                                    "MMM DD, YYYY HH:mm"
+                                  )}
+                                </Text>
+                                -
+                                <Text fz="xs" c="dimmed">
+                                  {activity.name || "Untitled Activity"}
+                                </Text>
+                                {isSelected && (
+                                  <Text fz="xs" c="dimmed" fs="italic">
+                                    (Click to unlink)
+                                  </Text>
+                                )}
+                              </Group>
+                              <Table>
+                                <Table.Tbody>
+                                  <Table.Tr>
+                                    <Table.Td>
+                                      <Group gap="xs" align="center">
+                                        <IconClock
+                                          size={18}
+                                          color="var(--mantine-color-gray-6)"
+                                        />
+                                        <Text fz="sm" c="dimmed">
+                                          Time
+                                        </Text>
+                                      </Group>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      <Text fz="sm" c="dimmed">
+                                        {formatTimeShort(activity.moving_time)}
+                                      </Text>
+                                    </Table.Td>
+                                  </Table.Tr>
+                                  <Table.Tr>
+                                    <Table.Td>
+                                      <Group gap="xs" align="center">
+                                        <IconRun
+                                          size={18}
+                                          color="var(--mantine-color-gray-6)"
+                                        />
+                                        <Text fz="sm" c="dimmed">
+                                          Distance
+                                        </Text>
+                                      </Group>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      <Text fz="sm" c="dimmed">
+                                        {formatDistance(activity.distance)} km
+                                      </Text>
+                                    </Table.Td>
+                                  </Table.Tr>
+                                  <Table.Tr>
+                                    <Table.Td>
+                                      <Group gap="xs" align="center">
+                                        <IconBrandSpeedtest
+                                          size={18}
+                                          color="var(--mantine-color-gray-6)"
+                                        />
+                                        <Text fz="sm" c="dimmed">
+                                          Pace
+                                        </Text>
+                                      </Group>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      <Text fz="sm" c="dimmed">
+                                        {formatPace(
+                                          activity.distance,
+                                          activity.moving_time
+                                        )}
+                                      </Text>
+                                    </Table.Td>
+                                  </Table.Tr>
+                                </Table.Tbody>
+                              </Table>
+                            </Stack>
+                          </Card>
+                        );
+                      })}
+                    </Stack>
+                  </Stack>
+                )}
               </Stack>
             )}
           </Stack>
