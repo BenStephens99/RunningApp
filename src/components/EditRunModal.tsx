@@ -1,11 +1,4 @@
-import {
-  Button,
-  Group,
-  Modal,
-  NumberInput,
-  Text,
-  Stack,
-} from "@mantine/core";
+import { Button, Group, Modal, NumberInput, Text, Stack } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { DatePickerInput } from "@mantine/dates";
 import { Run } from "~/types";
@@ -41,18 +34,18 @@ export function EditRunModal({
     let dateObj: Date;
     if (runDate instanceof Date) {
       dateObj = runDate;
-    } else if (typeof runDate === 'string') {
+    } else if (typeof runDate === "string") {
       dateObj = new Date(runDate);
     } else {
       // Fallback - shouldn't happen but be safe
       return;
     }
-    
+
     // Validate the date is valid
     if (isNaN(dateObj.getTime())) {
       return;
     }
-    
+
     onSave({
       id: run.id,
       run_length: runLength,
@@ -93,7 +86,14 @@ export function EditRunModal({
         <DatePickerInput
           label="Date"
           value={runDate}
-          onChange={(date) => setRunDate(date)}
+          onChange={(date) => {
+            if (date) {
+              // DatePickerInput can return Date or string, new Date() handles both
+              setRunDate(new Date(date as string | Date));
+            } else {
+              setRunDate(null);
+            }
+          }}
           placeholder="Select date"
           w="100%"
         />
@@ -114,4 +114,3 @@ export function EditRunModal({
     </Modal>
   );
 }
-
