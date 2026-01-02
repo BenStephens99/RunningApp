@@ -9,8 +9,6 @@ export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  console.log(login);
-
   return (
     <Group justify="center" mt="20vh">
       <Card withBorder w="400px" radius="md" p="md" shadow="sm">

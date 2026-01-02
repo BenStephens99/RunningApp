@@ -13,6 +13,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useDeleteRun, useGetRuns } from "~/hooks/runs";
 import { CreatePlanModal } from "~/components/CreatePlanModal";
 import { StravaActivityModal } from "~/components/StravaActivityModal";
+import { EditRunModal } from "~/components/EditRunModal";
+import { DeleteConfirmModal } from "~/components/DeleteConfirmModal";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconPencil,
@@ -47,6 +49,14 @@ function Home() {
   const [
     stravaModalOpened,
     { open: openStravaModal, close: closeStravaModal },
+  ] = useDisclosure(false);
+  const [editModalRunId, setEditModalRunId] = useState<string | null>(null);
+  const [editModalOpened, { open: openEditModal, close: closeEditModal }] =
+    useDisclosure(false);
+  const [deleteModalRunId, setDeleteModalRunId] = useState<string | null>(null);
+  const [
+    deleteModalOpened,
+    { open: openDeleteModal, close: closeDeleteModal },
   ] = useDisclosure(false);
 
   const { isEditing: editMode } = useEditing();
@@ -160,7 +170,7 @@ function Home() {
     <Stack>
       {groupedRuns.map(({ weekNumber, runs: weekRuns }) => (
         <Stack key={weekNumber} gap="sm">
-          <Title order={3} mt={weekNumber === 1 ? 0 : "md"}>
+          <Title order={4} mt={weekNumber === 1 ? 0 : "md"} c="dimmed">
             Week {weekNumber}
           </Title>
           {weekRuns.map((run) => {
@@ -169,8 +179,6 @@ function Home() {
             const stravaActivity = run.strava_link
               ? activitiesMap.get(parseInt(run.strava_link))
               : null;
-
-            console.log(stravaActivity);
 
             return (
               <div
@@ -233,7 +241,7 @@ function Home() {
                           {dayjs(run.run_date).format("dddd, DD MMMM YYYY")}
                         </Text>
                       </Group>
-                      {stravaActivity && (
+                      {stravaActivity && !editMode && (
                         <Group>
                           <Group>
                             <Group gap="2px" align="center">
@@ -269,26 +277,31 @@ function Home() {
                           </Group>
                         </Group>
                       )}
-                    </Stack>
-                    <Group ml="auto">
                       {editMode && (
-                        <ActionIcon.Group>
-                          <ActionIcon variant="light" size="lg">
+                        <Group>
+                          <ActionIcon
+                            variant="light"
+                            onClick={() => {
+                              setEditModalRunId(run.id);
+                              openEditModal();
+                            }}
+                          >
                             <IconPencil size={20} />
                           </ActionIcon>
                           <ActionIcon
                             variant="light"
                             c="red"
-                            size="lg"
-                            onClick={() =>
-                              deleteRun.mutate({ data: { id: run.id } })
-                            }
+                            onClick={() => {
+                              setDeleteModalRunId(run.id);
+                              openDeleteModal();
+                            }}
                           >
                             <IconTrash size={20} />
                           </ActionIcon>
-                        </ActionIcon.Group>
+                        </Group>
                       )}
-                    </Group>
+                    </Stack>
+                    <Group ml="auto"></Group>
                   </Group>
                 </Card>
               </div>
@@ -339,6 +352,59 @@ function Home() {
               });
             }
           }}
+        />
+      )}
+      {editModalRunId && (
+        <EditRunModal
+          opened={editModalOpened}
+          onClose={() => {
+            closeEditModal();
+            setEditModalRunId(null);
+          }}
+          run={runs.data?.find((r) => r.id === editModalRunId) || null}
+          onSave={(data) => {
+            const run = runs.data?.find((r) => r.id === editModalRunId);
+            if (run) {
+              updateRun.mutate(
+                {
+                  data: {
+                    id: data.id,
+                    run_length: data.run_length,
+                    run_date: data.run_date,
+                    strava_link: run.strava_link,
+                  },
+                },
+                {
+                  onSuccess: () => {
+                    closeEditModal();
+                    setEditModalRunId(null);
+                  },
+                }
+              );
+            }
+          }}
+          isLoading={updateRun.isPending}
+        />
+      )}
+      {deleteModalRunId && (
+        <DeleteConfirmModal
+          opened={deleteModalOpened}
+          onClose={() => {
+            closeDeleteModal();
+            setDeleteModalRunId(null);
+          }}
+          onConfirm={() => {
+            deleteRun.mutate(
+              { data: { id: deleteModalRunId } },
+              {
+                onSuccess: () => {
+                  closeDeleteModal();
+                  setDeleteModalRunId(null);
+                },
+              }
+            );
+          }}
+          isLoading={deleteRun.isPending}
         />
       )}
     </Stack>
