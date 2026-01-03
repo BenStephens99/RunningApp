@@ -116,15 +116,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
   const theme = createTheme({
     cursorType: "pointer",
-    components: {
-      ActionIcon: {
-        defaultProps: {
-          bg: "indigo.0",
-          color: "indigo.9",
-          variant: "light",
-        },
-      },
-    },
+    primaryColor: "indigo",
+    primaryShade: 6,
   });
 
   // Register service worker for PWA
@@ -143,8 +136,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const bg = "cyan";
-  const headerFooterBg = `${bg}.8`;
+  const bg = "indigo";
+  const headerFooterBg = `${bg}.5`;
   const mainBg = `${bg}.0`;
 
   return (
