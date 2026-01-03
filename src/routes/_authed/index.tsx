@@ -116,7 +116,7 @@ function Home() {
         />
       ))}
       {runs.data?.length === 0 && <EmptyState onCreatePlan={open} />}
-      <CreatePlanModal opened={opened} onClose={close} addMode={true} />
+      <CreatePlanModal opened={opened} onClose={close} />
       {stravaModalRunId && (
         <StravaActivityModal
           opened={stravaModalOpened}

@@ -43,7 +43,7 @@ export function Footer() {
           </ActionIcon>
         </Group>
       )}
-      <CreatePlanModal opened={opened} onClose={close} addMode={true} />
+      <CreatePlanModal opened={opened} onClose={close} />
     </>
   );
 }
