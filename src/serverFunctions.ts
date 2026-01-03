@@ -1,6 +1,7 @@
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getSupabaseServerClient } from "./utils/supabase";
+import { GoogleGenAI } from "@google/genai";
 import { Run, RunPayload, StravaActivity } from "./types";
 
 export const getUser = createServerFn({ method: "GET" }).handler(async () => {
@@ -478,3 +479,16 @@ export const disconnectStrava = createServerFn({ method: "POST" }).handler(
     return { success: true };
   }
 );
+
+const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+export const getGoogleGenAIMessage = createServerFn({ method: "POST" })
+  .inputValidator((d: { message: string }) => d)
+  .handler(async ({ data }) => {
+    const response = await gemini.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: data.message,
+    });
+
+    return response.text;
+  });

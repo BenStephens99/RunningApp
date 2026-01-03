@@ -4,4 +4,5 @@ export const QueryCacheKeys = {
   stravaToken: () => ["strava-token"],
   stravaAthlete: () => ["strava-athlete"],
   stravaActivities: () => ["strava-activities"],
+  geminiMessage: (message: string) => ["gemini-message", message],
 };
