@@ -1,9 +1,18 @@
-import { ActionIcon, Group, Menu, Avatar, Box } from "@mantine/core";
+import {
+  ActionIcon,
+  Group,
+  Menu,
+  Avatar,
+  Box,
+  Modal,
+  Button,
+  Text,
+} from "@mantine/core";
 import {
   IconLogout,
   IconBrandStrava,
-  IconCheck,
-  IconX,
+  IconTrash,
+  IconDotsVertical,
 } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import { useRouteContext } from "@tanstack/react-router";
@@ -16,6 +25,9 @@ import {
   getStravaAthlete,
 } from "~/serverFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
+import { useDeleteAllRuns } from "~/hooks/runs";
+
+import { useDisclosure } from "@mantine/hooks";
 
 export function Header() {
   const { user } = useRouteContext({ from: "__root__" });
@@ -24,6 +36,13 @@ export function Header() {
   const getAuthUrl = useServerFn(getStravaAuthUrl);
   const disconnect = useServerFn(disconnectStrava);
   const getAthlete = useServerFn(getStravaAthlete);
+
+  const deleteAllRuns = useDeleteAllRuns();
+
+  const [
+    deleteConfirmOpened,
+    { open: openDeleteConfirm, close: closeDeleteConfirm },
+  ] = useDisclosure(false);
 
   const { data: stravaToken, isLoading: isLoadingStravaToken } = useQuery({
     queryKey: QueryCacheKeys.stravaToken(),
@@ -66,81 +85,158 @@ export function Header() {
   const isStravaConnected = stravaToken?.hasToken === true;
 
   return (
-    <Group w="100%" maw={"1200px"} mx="auto" p="xs">
-      <Group justify="space-between" w="100%">
-        {user && (
-          <>
-            <Menu shadow="md" width={200}>
-              <Menu.Target>
-                {isStravaConnected && stravaAthlete?.profile ? (
-                  <Box style={{ position: "relative", cursor: "pointer" }}>
-                    <Avatar
-                      src={stravaAthlete.profile}
-                      alt="Strava profile"
-                      size="md"
-                      style={{
-                        cursor: "pointer",
-                        border: "2px solid var(--mantine-color-indigo-9)",
-                      }}
-                      variant="outline"
-                    />
-                    <IconBrandStrava
-                      size={20}
-                      color="var(--mantine-color-orange-6)"
-                      style={{
-                        position: "absolute",
-                        bottom: -4,
-                        right: -4,
-                        backgroundColor: "var(--mantine-color-orange-0)",
-                        borderRadius: "50%",
-                        padding: 2,
-                      }}
-                    />
-                  </Box>
-                ) : (
-                  <ActionIcon
-                    variant="light"
-                    size="lg"
-                    color="orange"
-                    loading={isLoadingStravaAthlete || isLoadingStravaToken}
-                  >
-                    <IconBrandStrava size={20} />
-                  </ActionIcon>
-                )}
-              </Menu.Target>
-
-              <Menu.Dropdown>
-                <Menu.Label>
-                  {isStravaConnected && stravaAthlete
-                    ? `${stravaAthlete.firstname} ${stravaAthlete.lastname}`
-                    : "Strava"}
-                </Menu.Label>
-                {isStravaConnected ? (
-                  <>
-                    <Menu.Item
-                      leftSection={<IconLogout size={20} />}
-                      color="red"
-                      onClick={handleStravaDisconnect}
+    <>
+      <Group w="100%" maw={"1200px"} mx="auto" p="xs">
+        <Group justify="space-between" w="100%">
+          {user && (
+            <>
+              <Menu shadow="md" width={200} withArrow>
+                <Menu.Target>
+                  {isStravaConnected && stravaAthlete?.profile ? (
+                    <Box style={{ position: "relative", cursor: "pointer" }}>
+                      <Avatar
+                        src={stravaAthlete.profile}
+                        alt="Strava profile"
+                        size="md"
+                        style={{
+                          cursor: "pointer",
+                          border: "2px solid var(--mantine-color-dark-9)",
+                        }}
+                        variant="outline"
+                      />
+                      <IconBrandStrava
+                        size={20}
+                        color="var(--mantine-color-orange-6)"
+                        style={{
+                          position: "absolute",
+                          bottom: -4,
+                          right: -4,
+                          backgroundColor: "var(--mantine-color-orange-0)",
+                          borderRadius: "50%",
+                          padding: 2,
+                        }}
+                      />
+                    </Box>
+                  ) : (
+                    <ActionIcon
+                      variant="light"
+                      size="lg"
+                      color="orange"
+                      loading={isLoadingStravaAthlete || isLoadingStravaToken}
                     >
-                      Disconnect Strava
+                      <IconBrandStrava size={20} />
+                    </ActionIcon>
+                  )}
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                  <Menu.Label>
+                    {isStravaConnected && stravaAthlete
+                      ? `${stravaAthlete.firstname} ${stravaAthlete.lastname}`
+                      : "Strava"}
+                  </Menu.Label>
+                  {isStravaConnected ? (
+                    <>
+                      <Menu.Item
+                        leftSection={<IconLogout size={20} />}
+                        color="red"
+                        onClick={handleStravaDisconnect}
+                      >
+                        Disconnect Strava
+                      </Menu.Item>
+                    </>
+                  ) : (
+                    <Menu.Item
+                      leftSection={<IconBrandStrava size={16} />}
+                      onClick={handleStravaConnect}
+                    >
+                      Connect Strava
                     </Menu.Item>
-                  </>
-                ) : (
-                  <Menu.Item
-                    leftSection={<IconBrandStrava size={16} />}
-                    onClick={handleStravaConnect}
+                  )}
+                </Menu.Dropdown>
+              </Menu>
+              <Menu withArrow>
+                <Menu.Target>
+                  <ActionIcon
+                    bg="transparent"
+                    color="indigo.0"
+                    radius="xl"
+                    size="lg"
                   >
-                    Connect Strava
+                    <IconDotsVertical size={24} />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
+                    color="red"
+                    leftSection={<IconTrash size={20} />}
+                    onClick={() => {
+                      openDeleteConfirm();
+                    }}
+                  >
+                    Delete current plan
                   </Menu.Item>
-                )}
-              </Menu.Dropdown>
-            </Menu>
-            <ActionIcon component={Link} to="/logout" variant="light" size="lg">
-              <IconLogout size={20} />
-            </ActionIcon>
-          </>
-        )}
+                  <Menu.Item
+                    component={Link}
+                    to="/logout"
+                    leftSection={<IconLogout size={20} />}
+                  >
+                    Log out
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </>
+          )}
+        </Group>
       </Group>
-    </Group>
+      <DeletePlanModal
+        opened={deleteConfirmOpened}
+        onClose={closeDeleteConfirm}
+        onConfirm={() =>
+          deleteAllRuns.mutate(
+            {},
+            {
+              onSuccess: () => {
+                closeDeleteConfirm();
+              },
+            }
+          )
+        }
+        isLoading={deleteAllRuns.isPending}
+      />
+    </>
+  );
+}
+
+function DeletePlanModal({
+  opened,
+  onClose,
+  onConfirm,
+  isLoading,
+}: {
+  opened: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading?: boolean;
+}) {
+  return (
+    <Modal opened={opened} onClose={onClose} title="Delete plan">
+      <Text>
+        Are you sure you want to delete this plan? This action cannot be undone.
+      </Text>
+      <Group justify="flex-end" mt="md">
+        <Button onClick={onClose} variant="default">
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant="filled"
+          color="red"
+          loading={isLoading}
+        >
+          Delete
+        </Button>
+      </Group>
+    </Modal>
   );
 }
