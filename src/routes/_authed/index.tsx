@@ -1,37 +1,19 @@
-import {
-  Button,
-  Card,
-  Group,
-  Stack,
-  Text,
-  ActionIcon,
-  Title,
-  Skeleton,
-} from "@mantine/core";
+import { Stack } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
-import { useDeleteRun, useGetRuns } from "~/hooks/runs";
+import { useDeleteRun, useGetRuns, useUpdateRun } from "~/hooks/runs";
 import { CreatePlanModal } from "~/components/CreatePlanModal";
 import { StravaActivityModal } from "~/components/StravaActivityModal";
 import { EditRunModal } from "~/components/EditRunModal";
 import { DeleteConfirmModal } from "~/components/DeleteConfirmModal";
+import { WeekGroup } from "~/components/WeekGroup";
+import { EmptyState } from "~/components/EmptyState";
 import { useDisclosure } from "@mantine/hooks";
-import {
-  IconPencil,
-  IconRun,
-  IconTrash,
-  IconBrandStrava,
-  IconClock,
-  IconBrandSpeedtest,
-} from "@tabler/icons-react";
-import dayjs from "dayjs";
-import { useUpdateRun } from "~/hooks/runs";
 import { useEditing } from "~/contexts/EditingContext";
-import { useEffect, useRef, useMemo, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { getStravaActivities } from "~/serverFunctions";
-import { useQuery } from "@tanstack/react-query";
-import { StravaActivity } from "~/types";
-import { formatDistance, formatTime, formatPace } from "~/utils/formatting";
+import { useEffect, useRef, useState } from "react";
+import { useRunGrouping } from "~/hooks/useRunGrouping";
+import { useStravaActivities } from "~/hooks/useStravaActivities";
+import { useAutoLinkStrava } from "~/hooks/useAutoLinkStrava";
+import { Run } from "~/types";
 
 export const Route = createFileRoute("/_authed/")({
   component: Home,
@@ -40,7 +22,6 @@ export const Route = createFileRoute("/_authed/")({
 function Home() {
   const runs = useGetRuns();
   const updateRun = useUpdateRun();
-
   const deleteRun = useDeleteRun();
 
   const [opened, { open, close }] = useDisclosure(false);
@@ -60,275 +41,81 @@ function Home() {
 
   const { isEditing: editMode } = useEditing();
 
-  const getActivities = useServerFn(getStravaActivities);
-  const { data: stravaActivities, isLoading: isLoadingStravaActivities } =
-    useQuery({
-      queryKey: ["strava-activities-all"],
-      queryFn: () => getActivities(),
-      retry: false,
-      refetchOnWindowFocus: false,
-    });
+  const { stravaActivities, activitiesMap, isLoadingStravaActivities } =
+    useStravaActivities();
 
-  const activitiesMap = useMemo(() => {
-    if (!stravaActivities) return new Map<number, StravaActivity>();
-    const map = new Map<number, StravaActivity>();
-    stravaActivities.forEach((activity) => {
-      map.set(activity.id, activity);
-    });
-    return map;
-  }, [stravaActivities]);
+  const { groupedRuns, nextRunId } = useRunGrouping(runs.data);
 
-  const nextRunRef = useRef<HTMLDivElement>(null);
+  const cardRefsMap = useRef(new Map<string, HTMLDivElement>());
 
-  const { groupedRuns, nextRunId } = useMemo(() => {
-    if (!runs.data || runs.data.length === 0) {
-      return { groupedRuns: [], nextRunId: null };
+  const setCardRef = (runId: string, element: HTMLDivElement | null) => {
+    if (element) {
+      cardRefsMap.current.set(runId, element);
+    } else {
+      cardRefsMap.current.delete(runId);
     }
-
-    const sortedRuns = [...runs.data].sort(
-      (a, b) => new Date(a.run_date).getTime() - new Date(b.run_date).getTime()
-    );
-
-    const nextRun = sortedRuns.find((run) => !run.strava_link);
-    const nextRunId = nextRun?.id || null;
-
-    const grouped = new Map<number, typeof sortedRuns>();
-    const firstRunDate = dayjs(sortedRuns[0].run_date);
-    const firstRunWeekStart = firstRunDate.startOf("week");
-
-    sortedRuns.forEach((run) => {
-      const runDate = dayjs(run.run_date);
-      const weekStart = runDate.startOf("week");
-      const weekNumber = weekStart.diff(firstRunWeekStart, "week") + 1;
-
-      if (!grouped.has(weekNumber)) {
-        grouped.set(weekNumber, []);
-      }
-      grouped.get(weekNumber)!.push(run);
-    });
-
-    const groupedArray = Array.from(grouped.entries()).map(
-      ([weekNumber, weekRuns]) => ({
-        weekNumber,
-        runs: weekRuns,
-      })
-    );
-
-    return { groupedRuns: groupedArray, nextRunId };
-  }, [runs.data]);
+  };
 
   useEffect(() => {
-    if (nextRunId && nextRunRef.current && runs.isSuccess) {
-      const timeoutId = setTimeout(() => {
-        requestAnimationFrame(() => {
-          nextRunRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
+    if (nextRunId && runs.isSuccess) {
+      const element = cardRefsMap.current.get(nextRunId);
+      if (element) {
+        const timeoutId = setTimeout(() => {
+          requestAnimationFrame(() => {
+            element.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
           });
-        });
-      }, 100);
+        }, 100);
 
-      return () => clearTimeout(timeoutId);
-    }
-  }, [runs.data, nextRunId]);
-
-  useEffect(() => {
-    if (!stravaActivities || !runs.data || runs.data.length === 0) {
-      return;
-    }
-
-    const unlinkedRuns = runs.data.filter((run) => !run.strava_link);
-
-    unlinkedRuns.forEach((run) => {
-      const runDate = dayjs(run.run_date).startOf("day");
-
-      const matchingActivity = stravaActivities.find((activity) => {
-        const activityDate = dayjs(activity.start_date).startOf("day");
-        return activityDate.isSame(runDate, "day");
-      });
-
-      if (matchingActivity) {
-        updateRun.mutate({
-          data: {
-            id: run.id,
-            run_length: run.run_length,
-            run_date: run.run_date,
-            strava_link: matchingActivity.id.toString(),
-          },
-        });
+        return () => clearTimeout(timeoutId);
       }
-    });
-  }, [stravaActivities, runs.data, updateRun]);
+    }
+  }, [runs.isSuccess, nextRunId]);
+
+  useAutoLinkStrava(stravaActivities, runs.data, updateRun);
+
+  const handleStravaClick = (run: Run) => {
+    if (run.strava_link && editMode) {
+      updateRun.mutate({
+        data: {
+          id: run.id,
+          run_length: run.run_length,
+          run_date: run.run_date,
+          strava_link: null,
+        },
+      });
+    } else {
+      setStravaModalRunId(run.id);
+      openStravaModal();
+    }
+  };
 
   return (
     <Stack>
       {groupedRuns.map(({ weekNumber, runs: weekRuns }) => (
-        <Stack key={weekNumber} gap="sm">
-          <Title
-            order={4}
-            mt={weekNumber === 1 ? 0 : "md"}
-            c="dimmed"
-            tt="uppercase"
-            fz="sm"
-          >
-            Week {weekNumber}
-          </Title>
-          {weekRuns.map((run) => {
-            const isNextRun = run.id === nextRunId;
-            const stravaActivity = run.strava_link
-              ? activitiesMap.get(parseInt(run.strava_link))
-              : null;
-
-            return (
-              <div
-                key={run.id}
-                ref={isNextRun ? nextRunRef : null}
-                style={{ scrollMargin: "175px" }}
-              >
-                <Card
-                  shadow="xs"
-                  radius="md"
-                  bg={run.strava_link ? "green.0" : "white"}
-                  withBorder
-                  style={{
-                    borderColor: isNextRun
-                      ? "var(--mantine-color-blue-5)"
-                      : run.strava_link
-                        ? "var(--mantine-color-green-3)"
-                        : "var(--mantine-color-gray-3)",
-                    borderWidth: isNextRun ? 2 : 1,
-                  }}
-                >
-                  <Group gap="lg">
-                    <ActionIcon
-                      variant={run.strava_link ? "filled" : "light"}
-                      size="lg"
-                      color={run.strava_link ? "green" : "orange"}
-                      bg={run.strava_link ? "green.4" : "orange.0"}
-                      onClick={() => {
-                        if (run.strava_link && editMode) {
-                          updateRun.mutate({
-                            data: {
-                              id: run.id,
-                              run_length: run.run_length,
-                              run_date: run.run_date,
-                              strava_link: null,
-                            },
-                          });
-                        } else {
-                          setStravaModalRunId(run.id);
-                          openStravaModal();
-                        }
-                      }}
-                      title={
-                        run.strava_link
-                          ? editMode
-                            ? "Unlink Strava activity"
-                            : "Change Strava activity"
-                          : "Link Strava activity"
-                      }
-                    >
-                      <IconBrandStrava size={20} />
-                    </ActionIcon>
-                    <Stack gap="xs">
-                      <Group>
-                        <Text fw="bold" fz="md">
-                          {run.run_length} km
-                        </Text>
-                        <Text fz="sm">
-                          {dayjs(run.run_date).format("dddd, DD MMMM YYYY")}
-                        </Text>
-                      </Group>
-                      {isLoadingStravaActivities && run.strava_link && (
-                        <Skeleton height={20} width={100} />
-                      )}
-                      {stravaActivity && !editMode && (
-                        <Group>
-                          <Group>
-                            <Group gap="2px" align="center">
-                              <IconClock
-                                size={14}
-                                color="var(--mantine-color-gray-6)"
-                              />
-                              <Text fz="sm" c="dimmed">
-                                {formatTime(stravaActivity.moving_time)}
-                              </Text>
-                            </Group>
-                            <Group gap="2px" align="center">
-                              <IconRun
-                                size={14}
-                                color="var(--mantine-color-gray-6)"
-                              />
-                              <Text fz="sm" c="dimmed">
-                                {formatDistance(stravaActivity.distance)} km
-                              </Text>
-                            </Group>
-                            <Group gap="2px" align="center">
-                              <IconBrandSpeedtest
-                                size={14}
-                                color="var(--mantine-color-gray-6)"
-                              />
-                              <Text fz="sm" c="dimmed">
-                                {formatPace(
-                                  stravaActivity.distance,
-                                  stravaActivity.moving_time
-                                )}
-                              </Text>
-                            </Group>
-                          </Group>
-                        </Group>
-                      )}
-                      {editMode && (
-                        <Group>
-                          <ActionIcon
-                            variant="light"
-                            onClick={() => {
-                              setEditModalRunId(run.id);
-                              openEditModal();
-                            }}
-                          >
-                            <IconPencil size={20} />
-                          </ActionIcon>
-                          <ActionIcon
-                            variant="light"
-                            c="red"
-                            onClick={() => {
-                              setDeleteModalRunId(run.id);
-                              openDeleteModal();
-                            }}
-                          >
-                            <IconTrash size={20} />
-                          </ActionIcon>
-                        </Group>
-                      )}
-                    </Stack>
-                    <Group ml="auto"></Group>
-                  </Group>
-                </Card>
-              </div>
-            );
-          })}
-        </Stack>
+        <WeekGroup
+          key={weekNumber}
+          weekNumber={weekNumber}
+          runs={weekRuns}
+          nextRunId={nextRunId}
+          activitiesMap={activitiesMap}
+          isLoadingStravaActivities={isLoadingStravaActivities}
+          editMode={editMode}
+          onStravaClick={handleStravaClick}
+          onEditClick={(runId) => {
+            setEditModalRunId(runId);
+            openEditModal();
+          }}
+          onDeleteClick={(runId) => {
+            setDeleteModalRunId(runId);
+            openDeleteModal();
+          }}
+          setCardRef={setCardRef}
+        />
       ))}
-      {runs.data?.length === 0 ? (
-        <>
-          <Button
-            mt="20vh"
-            w="fit-content"
-            mx="auto"
-            size="lg"
-            onClick={() => {
-              open();
-            }}
-            radius="xl"
-            rightSection={<IconPencil size={24} />}
-          >
-            Create plan
-          </Button>
-        </>
-      ) : (
-        <></>
-      )}
+      {runs.data?.length === 0 && <EmptyState onCreatePlan={open} />}
       <CreatePlanModal opened={opened} onClose={close} addMode={true} />
       {stravaModalRunId && (
         <StravaActivityModal
