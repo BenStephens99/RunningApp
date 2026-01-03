@@ -143,6 +143,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const bg = "cyan";
+  const headerFooterBg = `${bg}.8`;
+  const mainBg = `${bg}.0`;
+
   return (
     <html>
       <head>
@@ -151,12 +155,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <MantineProvider theme={theme}>
         <Notifications />
         <QueryClientProvider client={queryClient}>
-          <AppShell
-            bg="indigo.0"
-            header={{ height: 60 }}
-            footer={{ height: 80 }}
-          >
-            <AppShell.Header bg="indigo.4">
+          <AppShell bg={mainBg} header={{ height: 60 }} footer={{ height: 80 }}>
+            <AppShell.Header bg={headerFooterBg}>
               <Header />
             </AppShell.Header>
             <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
@@ -164,7 +164,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 {children}
               </Box>
             </AppShell.Main>
-            <AppShell.Footer bg="indigo.4">
+            <AppShell.Footer bg={headerFooterBg}>
               <React.Suspense fallback={<Skeleton height={60} />}>
                 <Footer />
               </React.Suspense>
