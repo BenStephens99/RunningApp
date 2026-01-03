@@ -652,7 +652,8 @@ export const getUnconfirmedPlans = createServerFn({ method: "GET" }).handler(
     const { data: rows, error } = await supabase
       .from("llm_plan_messages")
       .select("*")
-      .eq("status", "awaiting_user_confirmation");
+      .in("status", ["awaiting_user_confirmation", "generating"])
+      .order("created_at", { ascending: false });
     if (error) throw error;
     return rows as MessageHistory[];
   }

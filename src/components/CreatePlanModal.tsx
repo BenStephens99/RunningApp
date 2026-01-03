@@ -13,7 +13,7 @@ import {
 } from "@mantine/core";
 import { Stack } from "@mantine/core";
 import { useState } from "react";
-import { RunPayload } from "~/types";
+import { MessageHistory, RunPayload } from "~/types";
 import { useAddMultipleRuns } from "~/hooks/runs";
 import { useCreateGeminiRunPlan } from "~/hooks/gemini";
 import { IconRun } from "@tabler/icons-react";
@@ -80,6 +80,8 @@ function ModalContent({
   const [errorMessage, setErrorMessage] = useState("");
   const [hasSubmittedPlan, setHasSubmittedPlan] = useState(false);
 
+  const pendingPlan = unconfirmedPlans.data?.[0];
+
   const isFormValid = () => {
     if (currentAge <= 0) {
       setErrorMessage("Please enter a valid age");
@@ -128,15 +130,18 @@ function ModalContent({
     }
   };
 
-  const handleSavePlan = (planId: string) => {
+  const handleSavePlan = (plan: MessageHistory) => {
     markPlanAsCompleted.mutate({
       data: {
-        plan_id: planId,
+        plan_id: plan.id,
       },
     });
     addMultipleRuns.mutate(
       {
-        data: runs,
+        data: plan.formatted_response.plan.map((run) => ({
+          run_date: run.date,
+          run_length: run.distance,
+        })),
       },
       {
         onSuccess: () => {
@@ -147,20 +152,23 @@ function ModalContent({
     );
   };
 
-  if (unconfirmedPlans.isLoading || createGeminiRunPlan.isPending) {
+  if (
+    unconfirmedPlans.isLoading ||
+    createGeminiRunPlan.isPending ||
+    pendingPlan?.status === "generating"
+  ) {
     return (
-      <Stack>
+      <Stack h="50vh" justify="center" align="center">
         <Loader />
-        {createGeminiRunPlan.isPending && (
-          <Text>Generating your running plan</Text>
-        )}
+        {createGeminiRunPlan.isPending ||
+          (pendingPlan?.status === "generating" && (
+            <Text>Generating your running plan</Text>
+          ))}
       </Stack>
     );
   }
 
-  if (unconfirmedPlans.data && unconfirmedPlans.data.length > 0) {
-    const pendingPlan = unconfirmedPlans.data[0];
-
+  if (pendingPlan) {
     return (
       <Stack>
         <Paper withBorder p="md">
@@ -175,6 +183,7 @@ function ModalContent({
                 </Text>
               ),
               ul: ({ children }) => <List>{children}</List>,
+              ol: ({ children }) => <List>{children}</List>,
               li: ({ children }) => (
                 <List.Item>
                   <Text fz="sm" mb="xs">
@@ -220,17 +229,22 @@ function ModalContent({
             onClick={() =>
               markPlanAsDiscarded.mutate({
                 data: {
-                  plan_id: unconfirmedPlans.data[0].id,
+                  plan_id: pendingPlan.id,
                 },
               })
             }
             variant="filled"
             color="red"
             fullWidth
+            loading={markPlanAsDiscarded.isPending}
           >
             Discard Plan
           </Button>
-          <Button onClick={() => handleSavePlan(pendingPlan.id)} fullWidth>
+          <Button
+            onClick={() => handleSavePlan(pendingPlan)}
+            fullWidth
+            loading={markPlanAsCompleted.isPending || addMultipleRuns.isPending}
+          >
             Save Plan
           </Button>
         </Group>
@@ -303,12 +317,13 @@ function ModalContent({
       <Textarea
         label="Additional notes"
         value={additionalNotes}
+        autosize
         onChange={(e) => setAdditionalNotes(e.target.value)}
         w="100%"
         placeholder="Add some notes about your current fitness level. (Current running habits and pace etc)"
       />
       {errorMessage && <Text c="red">{errorMessage}</Text>}
-      <Button onClick={handleSumbitPlan}>Create Plan</Button>
+      <Button onClick={handleSumbitPlan}>Generate Plan</Button>
     </Stack>
   );
 }

@@ -41,7 +41,12 @@ export type RunPlanResponse = {
 
 export type MessageHistory = {
   id: string;
-  status: "generating" | "completed" | "awaiting_user_confirmation" | "error";
+  status:
+    | "generating"
+    | "completed"
+    | "awaiting_user_confirmation"
+    | "error"
+    | "user_rejected";
   message: string;
   raw_response: string;
   formatted_response: RunPlanResponse;
