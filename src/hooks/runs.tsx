@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   addMultipleRuns,
   addRun,
+  deleteAllRuns,
   deleteRun,
   getRuns,
   updateRun,
@@ -41,6 +42,13 @@ export function useUpdateRun() {
 export function useAddMultipleRuns() {
   return useInvalidateMutation({
     mutationFn: useServerFn(addMultipleRuns),
+    queryKey: QueryCacheKeys.runs(),
+  });
+}
+
+export function useDeleteAllRuns() {
+  return useInvalidateMutation({
+    mutationFn: useServerFn(deleteAllRuns),
     queryKey: QueryCacheKeys.runs(),
   });
 }

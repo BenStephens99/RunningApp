@@ -133,6 +133,26 @@ export const getRuns = createServerFn({ method: "GET" }).handler(async () => {
   return data;
 });
 
+export const deleteAllRuns = createServerFn({ method: "POST" }).handler(
+  async () => {
+    const supabase = getSupabaseServerClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      throw new Error("Not authenticated");
+    }
+    const { error } = await supabase
+      .from("runs")
+      .delete()
+      .eq("user_id", user.id);
+    if (error) throw error;
+    return { success: true };
+  }
+);
+
 export const addRun = createServerFn({ method: "POST" })
   .inputValidator((d: RunPayload) => d)
   .handler(async ({ data }) => {
