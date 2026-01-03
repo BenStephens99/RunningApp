@@ -17,6 +17,7 @@
     "@mantine/core": "^8.3.10",
     "@mantine/dates": "^8.3.10",
     "@mantine/hooks": "^8.3.10",
+    "@mantine/notifications": "^8.3.10",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",
     "@tabler/icons": "^3.36.0",
@@ -31,6 +32,7 @@
     "nitro": "^3.0.1-alpha.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
     "redaxios": "^0.5.1"
   },
   "devDependencies": {

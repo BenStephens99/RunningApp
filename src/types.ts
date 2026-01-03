@@ -21,3 +21,30 @@ export type StravaActivity = {
   start_date: string;
   type: string;
 };
+
+export type RunPlanPayload = {
+  current_age: number;
+  distance_goal: number;
+  days_of_week: string[];
+  start_date: string;
+  race_date: string;
+  additional_notes: string;
+};
+
+export type RunPlanResponse = {
+  plan: {
+    date: string;
+    distance: number;
+  }[];
+  comments: string;
+};
+
+export type MessageHistory = {
+  id: string;
+  status: "generating" | "completed" | "awaiting_user_confirmation" | "error";
+  message: string;
+  raw_response: string;
+  formatted_response: RunPlanResponse;
+  user_id: string;
+  created_at: string;
+};

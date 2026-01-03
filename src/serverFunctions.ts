@@ -2,7 +2,14 @@ import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getSupabaseServerClient } from "./utils/supabase";
 import { GoogleGenAI } from "@google/genai";
-import { Run, RunPayload, StravaActivity } from "./types";
+import {
+  MessageHistory,
+  Run,
+  RunPayload,
+  RunPlanPayload,
+  RunPlanResponse,
+  StravaActivity,
+} from "./types";
 
 export const getUser = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = getSupabaseServerClient();
@@ -482,7 +489,7 @@ export const disconnectStrava = createServerFn({ method: "POST" }).handler(
 
 const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-export const getGoogleGenAIMessage = createServerFn({ method: "POST" })
+export const sendGeminiMessage = createServerFn({ method: "POST" })
   .inputValidator((d: { message: string }) => d)
   .handler(async ({ data }) => {
     const response = await gemini.models.generateContent({
@@ -491,4 +498,190 @@ export const getGoogleGenAIMessage = createServerFn({ method: "POST" })
     });
 
     return response.text;
+  });
+
+export const sendGeminiRunPlan = createServerFn({ method: "POST" })
+  .inputValidator((d: RunPlanPayload) => d)
+  .handler(async ({ data }) => {
+    const message = `
+    Create a running plan for the following user:
+    - Current age: ${data.current_age}
+    - Distance goal: ${data.distance_goal}
+    - Days of week: ${data.days_of_week.join(", ")}
+    - Start date: ${data.start_date}
+    - Race date: ${data.race_date}
+    - Additional notes: ${data.additional_notes}
+
+    The plan should be based on the user's current fitness level, age and goals.
+    Feel free to add a small comments section to explain the plan. and any other relevant information.
+
+    Return the plan in the following JSON format only:
+  {
+    "plan": [
+      {
+        "date": "2026-01-01",
+        "distance": 10,
+      }
+      {
+        "date": "2026-01-02",
+        "distance": 10,
+      }
+      ...
+    ],
+    "comments": "Add any additional notes about the plan here"
+  }
+    `;
+
+    const messageHistory: MessageHistory = await addMessageToHistory({
+      data: {
+        message: message,
+      },
+    });
+
+    const response = await gemini.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: message,
+    });
+
+    if (!response.text) {
+      await updateMessageHistory({
+        data: {
+          id: messageHistory.id,
+          status: "error",
+          raw_response: "",
+          formatted_response: {
+            plan: [],
+            comments: "",
+          },
+        },
+      });
+      throw new Error("No response from Gemini");
+    }
+
+    let cleanedText = response.text.trim();
+
+    if (cleanedText.startsWith("```json")) {
+      cleanedText = cleanedText
+        .replace(/^```json\s*/i, "")
+        .replace(/\s*```.*$/s, "");
+    } else if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText
+        .replace(/^```\s*/, "")
+        .replace(/\s*```.*$/s, "");
+    }
+
+    let json: RunPlanResponse = {
+      plan: [],
+      comments: "",
+    };
+
+    try {
+      json = JSON.parse(cleanedText);
+    } catch (error) {
+      await updateMessageHistory({
+        data: {
+          id: messageHistory.id,
+          status: "error",
+          raw_response: response.text,
+          formatted_response: {
+            plan: [],
+            comments: "",
+          },
+        },
+      });
+      throw new Error("Invalid JSON response from Gemini");
+    }
+
+    await updateMessageHistory({
+      data: {
+        id: messageHistory.id,
+        status: "awaiting_user_confirmation",
+        raw_response: response.text,
+        formatted_response: json,
+      },
+    });
+
+    return json as RunPlanResponse;
+  });
+
+export const addMessageToHistory = createServerFn({ method: "POST" })
+  .inputValidator((d: { message: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const { data: row, error } = await supabase
+      .from("llm_plan_messages")
+      .insert({
+        message: data.message,
+        status: "generating",
+        user_id: user.id,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    if (!row) throw new Error("Failed to insert message");
+    return row as MessageHistory;
+  });
+
+export const updateMessageHistory = createServerFn({ method: "POST" })
+  .inputValidator((d: Partial<MessageHistory>) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const { error } = await supabase
+      .from("llm_plan_messages")
+      .update({
+        status: data.status,
+        raw_response: data.raw_response,
+        formatted_response: data.formatted_response,
+      })
+      .eq("id", data.id);
+    if (error) throw error;
+    return data;
+  });
+
+export const getUnconfirmedPlans = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const supabase = getSupabaseServerClient();
+    const { data: rows, error } = await supabase
+      .from("llm_plan_messages")
+      .select("*")
+      .eq("status", "awaiting_user_confirmation");
+    if (error) throw error;
+    return rows as MessageHistory[];
+  }
+);
+
+export const markPlanAsDiscarded = createServerFn({ method: "POST" })
+  .inputValidator((d: { plan_id: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const { error } = await supabase
+      .from("llm_plan_messages")
+      .update({
+        status: "user_rejected",
+      })
+      .eq("id", data.plan_id);
+    if (error) throw error;
+    return data;
+  });
+
+export const markPlanAsCompleted = createServerFn({ method: "POST" })
+  .inputValidator((d: { plan_id: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const { error } = await supabase
+      .from("llm_plan_messages")
+      .update({
+        status: "completed",
+      })
+      .eq("id", data.plan_id);
+    if (error) throw error;
+    return data;
   });

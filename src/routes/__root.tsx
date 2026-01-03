@@ -13,7 +13,7 @@ import { NotFound } from "../components/NotFound";
 import appCss from "../styles/app.css?url";
 import { seo } from "../utils/seo";
 import { getUser } from "../serverFunctions";
-
+import { Notifications } from "@mantine/notifications";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 
@@ -150,6 +150,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <MantineProvider theme={theme}>
+        <Notifications />
         <QueryClientProvider client={queryClient}>
           <EditingProvider>
             <AppShell

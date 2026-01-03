@@ -1,10 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
-import { QueryCacheKeys } from "~/QueryCacheKeys";
-import { getGoogleGenAIMessage } from "~/serverFunctions";
+import { useMutation } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { sendGeminiMessage, sendGeminiRunPlan } from "~/serverFunctions";
 
-export function useGetGoogleGenAIMessage(message: string) {
-  return useQuery({
-    queryKey: QueryCacheKeys.geminiMessage(message),
-    queryFn: () => getGoogleGenAIMessage({ data: { message } }),
+export function useGeminiMessage() {
+  return useMutation({
+    mutationFn: useServerFn(sendGeminiMessage),
+  });
+}
+
+export function useCreateGeminiRunPlan() {
+  return useMutation({
+    mutationFn: useServerFn(sendGeminiRunPlan),
   });
 }
