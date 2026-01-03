@@ -8,7 +8,6 @@ import { DeleteConfirmModal } from "~/components/DeleteConfirmModal";
 import { WeekGroup } from "~/components/WeekGroup";
 import { EmptyState } from "~/components/EmptyState";
 import { useDisclosure } from "@mantine/hooks";
-import { useEditing } from "~/contexts/EditingContext";
 import { useEffect, useRef, useState } from "react";
 import { useRunGrouping } from "~/hooks/useRunGrouping";
 import { useStravaActivities } from "~/hooks/useStravaActivities";
@@ -38,8 +37,6 @@ function Home() {
     deleteModalOpened,
     { open: openDeleteModal, close: closeDeleteModal },
   ] = useDisclosure(false);
-
-  const { isEditing: editMode } = useEditing();
 
   const { stravaActivities, activitiesMap, isLoadingStravaActivities } =
     useStravaActivities();
@@ -77,19 +74,8 @@ function Home() {
   useAutoLinkStrava(stravaActivities, runs.data, updateRun);
 
   const handleStravaClick = (run: Run) => {
-    if (run.strava_link && editMode) {
-      updateRun.mutate({
-        data: {
-          id: run.id,
-          run_length: run.run_length,
-          run_date: run.run_date,
-          strava_link: null,
-        },
-      });
-    } else {
-      setStravaModalRunId(run.id);
-      openStravaModal();
-    }
+    setStravaModalRunId(run.id);
+    openStravaModal();
   };
 
   return (
@@ -102,7 +88,6 @@ function Home() {
           nextRunId={nextRunId}
           activitiesMap={activitiesMap}
           isLoadingStravaActivities={isLoadingStravaActivities}
-          editMode={editMode}
           onStravaClick={handleStravaClick}
           onEditClick={(runId) => {
             setEditModalRunId(runId);

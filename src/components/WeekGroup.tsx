@@ -8,7 +8,6 @@ interface WeekGroupProps {
   nextRunId: string | null;
   activitiesMap: Map<number, StravaActivity>;
   isLoadingStravaActivities: boolean;
-  editMode: boolean;
   onStravaClick: (run: Run) => void;
   onEditClick: (runId: string) => void;
   onDeleteClick: (runId: string) => void;
@@ -21,7 +20,6 @@ export function WeekGroup({
   nextRunId,
   activitiesMap,
   isLoadingStravaActivities,
-  editMode,
   onStravaClick,
   onEditClick,
   onDeleteClick,
@@ -51,7 +49,6 @@ export function WeekGroup({
             isNextRun={isNextRun}
             stravaActivity={stravaActivity || null}
             isLoadingStravaActivities={isLoadingStravaActivities}
-            editMode={editMode}
             onStravaClick={() => onStravaClick(run)}
             onEditClick={() => onEditClick(run.id)}
             onDeleteClick={() => onDeleteClick(run.id)}
@@ -62,4 +59,3 @@ export function WeekGroup({
     </Stack>
   );
 }
-

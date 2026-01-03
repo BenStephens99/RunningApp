@@ -23,7 +23,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../utils/queryClient";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
-import { EditingProvider } from "~/contexts/EditingContext";
 import { Header } from "~/components/Header";
 
 const Footer = React.lazy(() =>
@@ -152,30 +151,28 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <MantineProvider theme={theme}>
         <Notifications />
         <QueryClientProvider client={queryClient}>
-          <EditingProvider>
-            <AppShell
-              bg="indigo.0"
-              header={{ height: 60 }}
-              footer={{ height: 80 }}
-            >
-              <AppShell.Header bg="indigo.4">
-                <Header />
-              </AppShell.Header>
-              <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
-                <Box my="md" h="100%">
-                  {children}
-                </Box>
-              </AppShell.Main>
-              <AppShell.Footer bg="indigo.4">
-                <React.Suspense fallback={<Skeleton height={60} />}>
-                  <Footer />
-                </React.Suspense>
-              </AppShell.Footer>
-            </AppShell>
-            <TanStackRouterDevtools position="bottom-right" />
-            <ReactQueryDevtools buttonPosition="bottom-right" />
-            <Scripts />
-          </EditingProvider>
+          <AppShell
+            bg="indigo.0"
+            header={{ height: 60 }}
+            footer={{ height: 80 }}
+          >
+            <AppShell.Header bg="indigo.4">
+              <Header />
+            </AppShell.Header>
+            <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
+              <Box my="md" h="100%">
+                {children}
+              </Box>
+            </AppShell.Main>
+            <AppShell.Footer bg="indigo.4">
+              <React.Suspense fallback={<Skeleton height={60} />}>
+                <Footer />
+              </React.Suspense>
+            </AppShell.Footer>
+          </AppShell>
+          <TanStackRouterDevtools position="bottom-right" />
+          <ReactQueryDevtools buttonPosition="bottom-right" />
+          <Scripts />
         </QueryClientProvider>
       </MantineProvider>
     </html>
