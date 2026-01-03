@@ -5,9 +5,8 @@ import {
   Stack,
   Text,
   ActionIcon,
-  Checkbox,
   Title,
-  ThemeIcon,
+  Skeleton,
 } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
 import { useDeleteRun, useGetRuns } from "~/hooks/runs";
@@ -61,16 +60,15 @@ function Home() {
 
   const { isEditing: editMode } = useEditing();
 
-  // Fetch Strava activities on page load
   const getActivities = useServerFn(getStravaActivities);
-  const { data: stravaActivities } = useQuery({
-    queryKey: ["strava-activities-all"],
-    queryFn: () => getActivities(),
-    retry: false, // Don't retry if user doesn't have Strava connected
-    refetchOnWindowFocus: false,
-  });
+  const { data: stravaActivities, isLoading: isLoadingStravaActivities } =
+    useQuery({
+      queryKey: ["strava-activities-all"],
+      queryFn: () => getActivities(),
+      retry: false,
+      refetchOnWindowFocus: false,
+    });
 
-  // Create a map of activity ID to activity for quick lookup
   const activitiesMap = useMemo(() => {
     if (!stravaActivities) return new Map<number, StravaActivity>();
     const map = new Map<number, StravaActivity>();
@@ -134,26 +132,22 @@ function Home() {
     }
   }, [runs.data, nextRunId]);
 
-  // Auto-link Strava activities to runs on the same day
   useEffect(() => {
     if (!stravaActivities || !runs.data || runs.data.length === 0) {
       return;
     }
 
-    // Find runs without strava_link and try to match them with activities
     const unlinkedRuns = runs.data.filter((run) => !run.strava_link);
 
     unlinkedRuns.forEach((run) => {
       const runDate = dayjs(run.run_date).startOf("day");
 
-      // Find a matching activity on the same day
       const matchingActivity = stravaActivities.find((activity) => {
         const activityDate = dayjs(activity.start_date).startOf("day");
         return activityDate.isSame(runDate, "day");
       });
 
       if (matchingActivity) {
-        // Auto-link the activity to the run
         updateRun.mutate({
           data: {
             id: run.id,
@@ -181,7 +175,6 @@ function Home() {
           </Title>
           {weekRuns.map((run) => {
             const isNextRun = run.id === nextRunId;
-            // Find matching Strava activity if strava_link exists
             const stravaActivity = run.strava_link
               ? activitiesMap.get(parseInt(run.strava_link))
               : null;
@@ -214,7 +207,6 @@ function Home() {
                       bg={run.strava_link ? "green.4" : "orange.0"}
                       onClick={() => {
                         if (run.strava_link && editMode) {
-                          // Unlink if in edit mode and already linked
                           updateRun.mutate({
                             data: {
                               id: run.id,
@@ -224,7 +216,6 @@ function Home() {
                             },
                           });
                         } else {
-                          // Open modal to link/unlink
                           setStravaModalRunId(run.id);
                           openStravaModal();
                         }
@@ -248,6 +239,9 @@ function Home() {
                           {dayjs(run.run_date).format("dddd, DD MMMM YYYY")}
                         </Text>
                       </Group>
+                      {isLoadingStravaActivities && run.strava_link && (
+                        <Skeleton height={20} width={100} />
+                      )}
                       {stravaActivity && !editMode && (
                         <Group>
                           <Group>
@@ -348,7 +342,6 @@ function Home() {
           onSelect={(activityId) => {
             const run = runs.data?.find((r) => r.id === stravaModalRunId);
             if (run) {
-              // Link or unlink the Strava activity
               updateRun.mutate({
                 data: {
                   id: run.id,
