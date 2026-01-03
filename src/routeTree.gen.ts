@@ -16,9 +16,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
-import { Route as AuthedPostsRouteImport } from './routes/_authed/posts'
-import { Route as AuthedPostsIndexRouteImport } from './routes/_authed/posts.index'
-import { Route as AuthedPostsPostIdRouteImport } from './routes/_authed/posts.$postId'
 
 const StravaCallbackRoute = StravaCallbackRouteImport.update({
   id: '/strava-callback',
@@ -54,21 +51,6 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedPostsRoute = AuthedPostsRouteImport.update({
-  id: '/posts',
-  path: '/posts',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedPostsIndexRoute = AuthedPostsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthedPostsRoute,
-} as any)
-const AuthedPostsPostIdRoute = AuthedPostsPostIdRouteImport.update({
-  id: '/$postId',
-  path: '/$postId',
-  getParentRoute: () => AuthedPostsRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/auth-callback': typeof AuthCallbackRoute
@@ -76,10 +58,7 @@ export interface FileRoutesByFullPath {
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/strava-callback': typeof StravaCallbackRoute
-  '/posts': typeof AuthedPostsRouteWithChildren
   '/': typeof AuthedIndexRoute
-  '/posts/$postId': typeof AuthedPostsPostIdRoute
-  '/posts/': typeof AuthedPostsIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth-callback': typeof AuthCallbackRoute
@@ -88,8 +67,6 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/strava-callback': typeof StravaCallbackRoute
   '/': typeof AuthedIndexRoute
-  '/posts/$postId': typeof AuthedPostsPostIdRoute
-  '/posts': typeof AuthedPostsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -99,10 +76,7 @@ export interface FileRoutesById {
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/strava-callback': typeof StravaCallbackRoute
-  '/_authed/posts': typeof AuthedPostsRouteWithChildren
   '/_authed/': typeof AuthedIndexRoute
-  '/_authed/posts/$postId': typeof AuthedPostsPostIdRoute
-  '/_authed/posts/': typeof AuthedPostsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -112,10 +86,7 @@ export interface FileRouteTypes {
     | '/logout'
     | '/signup'
     | '/strava-callback'
-    | '/posts'
     | '/'
-    | '/posts/$postId'
-    | '/posts/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth-callback'
@@ -124,8 +95,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/strava-callback'
     | '/'
-    | '/posts/$postId'
-    | '/posts'
   id:
     | '__root__'
     | '/_authed'
@@ -134,10 +103,7 @@ export interface FileRouteTypes {
     | '/logout'
     | '/signup'
     | '/strava-callback'
-    | '/_authed/posts'
     | '/_authed/'
-    | '/_authed/posts/$postId'
-    | '/_authed/posts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -200,51 +166,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/posts': {
-      id: '/_authed/posts'
-      path: '/posts'
-      fullPath: '/posts'
-      preLoaderRoute: typeof AuthedPostsRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/posts/': {
-      id: '/_authed/posts/'
-      path: '/'
-      fullPath: '/posts/'
-      preLoaderRoute: typeof AuthedPostsIndexRouteImport
-      parentRoute: typeof AuthedPostsRoute
-    }
-    '/_authed/posts/$postId': {
-      id: '/_authed/posts/$postId'
-      path: '/$postId'
-      fullPath: '/posts/$postId'
-      preLoaderRoute: typeof AuthedPostsPostIdRouteImport
-      parentRoute: typeof AuthedPostsRoute
-    }
   }
 }
 
-interface AuthedPostsRouteChildren {
-  AuthedPostsPostIdRoute: typeof AuthedPostsPostIdRoute
-  AuthedPostsIndexRoute: typeof AuthedPostsIndexRoute
-}
-
-const AuthedPostsRouteChildren: AuthedPostsRouteChildren = {
-  AuthedPostsPostIdRoute: AuthedPostsPostIdRoute,
-  AuthedPostsIndexRoute: AuthedPostsIndexRoute,
-}
-
-const AuthedPostsRouteWithChildren = AuthedPostsRoute._addFileChildren(
-  AuthedPostsRouteChildren,
-)
-
 interface AuthedRouteChildren {
-  AuthedPostsRoute: typeof AuthedPostsRouteWithChildren
   AuthedIndexRoute: typeof AuthedIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
-  AuthedPostsRoute: AuthedPostsRouteWithChildren,
   AuthedIndexRoute: AuthedIndexRoute,
 }
 
