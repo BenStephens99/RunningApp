@@ -9,6 +9,7 @@ import {
   updateRun,
 } from "~/serverFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
+import { useGetUser } from "./auth";
 import { useQuery } from "@tanstack/react-query";
 
 export function useAddRun() {
@@ -19,9 +20,12 @@ export function useAddRun() {
 }
 
 export function useGetRuns() {
+  const { data: user } = useGetUser();
+
   return useQuery({
     queryKey: QueryCacheKeys.runs(),
     queryFn: useServerFn(getRuns),
+    enabled: !!user,
   });
 }
 
