@@ -24,6 +24,7 @@ import { queryClient } from "../utils/queryClient";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { Header } from "~/components/Header";
+import { useEffect } from "react";
 
 const Footer = React.lazy(() =>
   import("~/components/Footer").then((mod) => ({ default: mod.Footer }))
@@ -51,7 +52,7 @@ export const Route = createRootRoute({
         content: "#228be6",
       },
       {
-        name: "apple-mobile-web-app-capable",
+        name: "mobile-web-app-capable",
         content: "yes",
       },
       {
@@ -112,7 +113,10 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { user } = Route.useRouteContext();
-  queryClient.setQueryData(QueryCacheKeys.user(), user);
+
+  useEffect(() => {
+    queryClient.setQueryData(QueryCacheKeys.user(), user);
+  }, [user]);
 
   const theme = createTheme({
     cursorType: "pointer",
@@ -121,7 +125,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   });
 
   // Register service worker for PWA
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
@@ -136,38 +140,40 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const bg = "indigo";
-  const headerFooterBg = `${bg}.5`;
-  const mainBg = `${bg}.0`;
-
   return (
     <html>
       <head>
         <HeadContent />
       </head>
-      <MantineProvider theme={theme}>
-        <Notifications />
-        <QueryClientProvider client={queryClient}>
-          <AppShell bg={mainBg} header={{ height: 60 }} footer={{ height: 80 }}>
-            <AppShell.Header bg={headerFooterBg}>
-              <Header />
-            </AppShell.Header>
-            <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
-              <Box my="md" h="100%">
-                {children}
-              </Box>
-            </AppShell.Main>
-            <AppShell.Footer bg={headerFooterBg}>
-              <React.Suspense fallback={<Skeleton height={60} />}>
-                <Footer />
-              </React.Suspense>
-            </AppShell.Footer>
-          </AppShell>
-          <TanStackRouterDevtools position="bottom-right" />
-          <ReactQueryDevtools buttonPosition="bottom-right" />
-          <Scripts />
-        </QueryClientProvider>
-      </MantineProvider>
+      <body suppressHydrationWarning>
+        <MantineProvider theme={theme}>
+          <Notifications />
+          <QueryClientProvider client={queryClient}>
+            <AppShell
+              bg="var(--mantine-primary-color-0)"
+              header={{ height: 60 }}
+              footer={{ height: 80 }}
+            >
+              <AppShell.Header bg="var(--mantine-primary-color-4)">
+                <Header />
+              </AppShell.Header>
+              <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
+                <Box my="md" h="100%">
+                  {children}
+                </Box>
+              </AppShell.Main>
+              <AppShell.Footer bg="var(--mantine-primary-color-4)">
+                <React.Suspense fallback={<Skeleton height={60} />}>
+                  <Footer />
+                </React.Suspense>
+              </AppShell.Footer>
+            </AppShell>
+            <TanStackRouterDevtools position="bottom-right" />
+            <ReactQueryDevtools buttonPosition="bottom-right" />
+            <Scripts />
+          </QueryClientProvider>
+        </MantineProvider>
+      </body>
     </html>
   );
 }
