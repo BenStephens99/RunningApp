@@ -24,8 +24,6 @@ import {
 } from "~/serverFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 
-import { useDisclosure } from "@mantine/hooks";
-
 export function Header() {
   const { user } = useRouteContext({ from: "__root__" });
   const queryClient = useQueryClient();
@@ -33,12 +31,6 @@ export function Header() {
   const getAuthUrl = useServerFn(getStravaAuthUrl);
   const disconnect = useServerFn(disconnectStrava);
   const getAthlete = useServerFn(getStravaAthlete);
-
-
-  const [
-    deleteConfirmOpened,
-    { open: openDeleteConfirm, close: closeDeleteConfirm },
-  ] = useDisclosure(false);
 
   const { data: stravaToken, isLoading: isLoadingStravaToken } = useQuery({
     queryKey: QueryCacheKeys.stravaToken(),
@@ -165,15 +157,6 @@ export function Header() {
                 <Menu.Dropdown>
                   <Menu.Item component={Link} to="/" leftSection={<IconHome size={20} />}>
                     Home
-                  </Menu.Item>
-                  <Menu.Item
-                    color="red"
-                    leftSection={<IconTrash size={20} />}
-                    onClick={() => {
-                      openDeleteConfirm();
-                    }}
-                  >
-                    Delete current plan
                   </Menu.Item>
                   <Menu.Item
                     component={Link}
