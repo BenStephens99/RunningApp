@@ -4,15 +4,13 @@ import {
   Menu,
   Avatar,
   Box,
-  Modal,
-  Button,
-  Text,
 } from "@mantine/core";
 import {
   IconLogout,
   IconBrandStrava,
   IconTrash,
   IconDotsVertical,
+  IconHome,
 } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import { useRouteContext } from "@tanstack/react-router";
@@ -25,7 +23,6 @@ import {
   getStravaAthlete,
 } from "~/serverFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
-import { useDeleteAllRuns } from "~/hooks/runs";
 
 import { useDisclosure } from "@mantine/hooks";
 
@@ -37,7 +34,6 @@ export function Header() {
   const disconnect = useServerFn(disconnectStrava);
   const getAthlete = useServerFn(getStravaAthlete);
 
-  const deleteAllRuns = useDeleteAllRuns();
 
   const [
     deleteConfirmOpened,
@@ -167,6 +163,9 @@ export function Header() {
                   </ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
+                  <Menu.Item component={Link} to="/" leftSection={<IconHome size={20} />}>
+                    Home
+                  </Menu.Item>
                   <Menu.Item
                     color="red"
                     leftSection={<IconTrash size={20} />}
@@ -189,54 +188,7 @@ export function Header() {
           )}
         </Group>
       </Group>
-      <DeletePlanModal
-        opened={deleteConfirmOpened}
-        onClose={closeDeleteConfirm}
-        onConfirm={() =>
-          deleteAllRuns.mutate(
-            {},
-            {
-              onSuccess: () => {
-                closeDeleteConfirm();
-              },
-            }
-          )
-        }
-        isLoading={deleteAllRuns.isPending}
-      />
+ 
     </>
-  );
-}
-
-function DeletePlanModal({
-  opened,
-  onClose,
-  onConfirm,
-  isLoading,
-}: {
-  opened: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading?: boolean;
-}) {
-  return (
-    <Modal opened={opened} onClose={onClose} title="Delete plan">
-      <Text>
-        Are you sure you want to delete this plan? This action cannot be undone.
-      </Text>
-      <Group justify="flex-end" mt="md">
-        <Button onClick={onClose} variant="default">
-          Cancel
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant="filled"
-          color="red"
-          loading={isLoading}
-        >
-          Delete
-        </Button>
-      </Group>
-    </Modal>
   );
 }

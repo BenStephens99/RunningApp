@@ -25,6 +25,8 @@ import {
   useMarkPlanAsCompleted,
 } from "~/hooks/llmPlanMessages";
 import dayjs from "dayjs";
+import { useCreateRunPlan } from "~/hooks/runPlans";
+import { useRouter } from "@tanstack/react-router";
 
 export function CreatePlanModal({
   opened,
@@ -61,11 +63,14 @@ function ModalContent({
   opened: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
+
   const unconfirmedPlans = useGetUnconfirmedPlans();
   const createGeminiRunPlan = useCreateGeminiRunPlan();
   const addMultipleRuns = useAddMultipleRuns();
   const markPlanAsDiscarded = useMarkPlanAsDiscarded();
   const markPlanAsCompleted = useMarkPlanAsCompleted();
+  const createRunPlan = useCreateRunPlan();
 
   const [runs, setRuns] = useState<RunPayload[]>([]);
   const [distanceGoal, setDistanceGoal] = useState(10);
@@ -130,26 +135,49 @@ function ModalContent({
     }
   };
 
-  const handleSavePlan = (plan: MessageHistory) => {
-    markPlanAsCompleted.mutate({
-      data: {
-        plan_id: plan.id,
-      },
-    });
-    addMultipleRuns.mutate(
+  const handleSavePlan = (LLmPlanMessage: MessageHistory) => {
+    createRunPlan.mutate(
       {
-        data: plan.formatted_response.plan.map((run) => ({
-          run_date: run.date,
-          run_length: run.distance,
-        })),
+        data: {
+          name: `Plan ${dayjs().format("YYYY-MM-DD")}`,
+          llm_message_id: LLmPlanMessage.id,
+        },
       },
       {
-        onSuccess: () => {
-          onClose();
-          setRuns([]);
+        onSuccess: (createdPlan) => {
+          addMultipleRuns.mutate(
+            {
+              data: LLmPlanMessage.formatted_response.plan.map((run) => ({
+                run_date: run.date,
+                run_length: run.distance,
+                plan_id: createdPlan.id,
+                pace: run.pace,
+                notes: run.notes,
+              })),
+            },
+            {
+              onSuccess: () => {
+                markPlanAsCompleted.mutate(
+                  {
+                    data: {
+                      plan_id: LLmPlanMessage.id,
+                    },
+                  },
+                  {
+                    onSuccess: () => {
+                      onClose();
+                      setRuns([]);
+                      router.navigate({ to: "/plan/$planId", params: { planId: createdPlan.id } });
+                    },
+                  }
+                );
+              },
+            }
+          );
         },
       }
     );
+
   };
 
   if (
@@ -203,6 +231,16 @@ function ModalContent({
                 <Table.Th>Date</Table.Th>
                 <Table.Th>
                   <Text fz="sm" fw="bold" ta="right">
+                    Pace
+                  </Text>
+                </Table.Th>
+                <Table.Th>
+                  <Text fz="sm" fw="bold" ta="right">
+                    Notes
+                  </Text>
+                </Table.Th>
+                <Table.Th>
+                  <Text fz="sm" fw="bold" ta="right">
                     Distance (km)
                   </Text>
                 </Table.Th>
@@ -213,6 +251,16 @@ function ModalContent({
                 <Table.Tr key={index}>
                   <Table.Td>
                     {dayjs(run.date).format("ddd DD/MM/YYYY")}
+                  </Table.Td>
+                  <Table.Td>
+                    <Text fz="sm" ta="right">
+                      {run.pace}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text fz="sm" ta="right">
+                      {run.notes}
+                    </Text>
                   </Table.Td>
                   <Table.Td>
                     <Text fz="sm" ta="right">

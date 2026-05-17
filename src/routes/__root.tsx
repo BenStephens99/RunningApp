@@ -12,7 +12,7 @@ import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import appCss from "../styles/app.css?url";
 import { seo } from "../utils/seo";
-import { getUser } from "../serverFunctions";
+import { getUser, getSession } from "../serverFunctions";
 import { Notifications } from "@mantine/notifications";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
@@ -32,11 +32,50 @@ const Footer = React.lazy(() =>
 
 export const Route = createRootRoute({
   beforeLoad: async () => {
-    const user = await getUser();
 
-    return {
-      user,
-    };
+    if (typeof window !== 'undefined') {
+      const accessToken = localStorage.getItem('app-access-token') ?? ''
+      const refreshToken = localStorage.getItem('app-refresh-token') ?? ''
+
+      const session = await getSession({
+        data: {
+          accessToken,
+          refreshToken,
+        },
+      });
+
+
+
+      if (session) {
+        localStorage.setItem('app-access-token', session.access_token);
+        localStorage.setItem('app-refresh-token', session.refresh_token);
+
+        const user = await getUser()
+        return {
+          user,
+        };
+      }
+
+      return {
+        user: null,
+      };
+    } else {
+      const session = await getSession()
+
+      if (session) {
+        const user = await getUser()
+
+        return {
+          user,
+        };
+      }
+
+      return {
+        user: null,
+      };
+    }
+
+
   },
   head: () => ({
     meta: [

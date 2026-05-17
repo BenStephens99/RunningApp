@@ -13,9 +13,9 @@ function Logout() {
 
   useEffect(() => {
     const handleLogout = async () => {
-      // Clear all query cache before logging out
       queryClient.clear();
-      // Call logout server function
+      localStorage.removeItem('app-access-token');
+      localStorage.removeItem('app-refresh-token');
       await logoutFn();
     };
 

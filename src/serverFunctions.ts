@@ -9,7 +9,31 @@ import {
   RunPlanPayload,
   RunPlanResponse,
   StravaActivity,
+  RunPlan,
+  RunPlanListItem,
 } from "./types";
+
+enum GEMINI_MODELS {
+  GEMINI_3_1_FLASH_LITE = "gemini-3.1-flash-lite",
+  GEMINI_2_5_FLASH = "gemini-2.5-flash",
+}
+
+const CURRENT_MODEL = GEMINI_MODELS.GEMINI_3_1_FLASH_LITE;
+
+export const getSession = createServerFn({ method: "GET" })
+  .inputValidator((d?: { accessToken?: string, refreshToken?: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+
+    if (data?.accessToken && data?.refreshToken) {
+      await supabase.auth.setSession({
+        access_token: data.accessToken,
+        refresh_token: data.refreshToken
+      })
+    }
+    const { data: sessionData } = await supabase.auth.getSession();
+    return sessionData.session ?? null;
+  })
 
 export const getUser = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = getSupabaseServerClient();
@@ -28,7 +52,7 @@ export const login = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string; password: string }) => d)
   .handler(async ({ data }) => {
     const supabase = getSupabaseServerClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error, data: sessionData } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     });
@@ -37,8 +61,15 @@ export const login = createServerFn({ method: "POST" })
       return {
         error: true,
         message: error.message,
+        session: null,
       };
     }
+
+    return {
+      error: false,
+      message: "Login successful",
+      session: sessionData.session,
+    };
   });
 
 export const logout = createServerFn().handler(async () => {
@@ -111,16 +142,21 @@ export const handleGoogleCallback = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const supabase = getSupabaseServerClient();
 
-    const { error } = await supabase.auth.exchangeCodeForSession(data.code);
+    const { error, data: sessionData } = await supabase.auth.exchangeCodeForSession(data.code);
 
     if (error) {
       return {
         error: true,
         message: error.message,
+        session: null,
       };
     }
 
-    return { success: true };
+    return {
+      error: false,
+      message: "Login successful",
+      session: sessionData.session,
+    };
   });
 
 export const getRuns = createServerFn({ method: "GET" }).handler(async () => {
@@ -229,10 +265,13 @@ export const addMultipleRuns = createServerFn({ method: "POST" })
         run_length: d.run_length,
         run_date: d.run_date,
         user_id: user.id,
+        plan_id: d.plan_id,
+        pace: d.pace,
+        notes: d.notes,
       }))
     );
     if (error) throw error;
-    return data;
+    return rows;
   });
 
 export const deleteRun = createServerFn({ method: "POST" })
@@ -513,7 +552,7 @@ export const sendGeminiMessage = createServerFn({ method: "POST" })
   .inputValidator((d: { message: string }) => d)
   .handler(async ({ data }) => {
     const response = await gemini.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: CURRENT_MODEL,
       contents: data.message,
     });
 
@@ -524,7 +563,7 @@ export const sendGeminiRunPlan = createServerFn({ method: "POST" })
   .inputValidator((d: RunPlanPayload) => d)
   .handler(async ({ data }) => {
     const message = `
-    Create a running plan for the following user:
+    You are an expert running coach. Create a running plan for the following user:
     - Current age: ${data.current_age}
     - Distance goal: ${data.distance_goal}
     - Days of week: ${data.days_of_week.join(", ")}
@@ -535,16 +574,20 @@ export const sendGeminiRunPlan = createServerFn({ method: "POST" })
     The plan should be based on the user's current fitness level, age and goals.
     Feel free to add a small comments section to explain the plan. and any other relevant information.
 
-    Return the plan in the following JSON format only:
+    Return the plan in the following JSON format only, (the date must be in the format of YYYY-MM-DD and the distance must be in kilometers and just the number, notes can be flexible but keep them short, pace goal should be in the format of mm:ss /km, ): 
   {
     "plan": [
       {
         "date": "2026-01-01",
         "distance": 10,
+        "pace": "5:00 /km",
+        "notes": "Add any additional notes about the run here"
       }
       {
         "date": "2026-01-02",
         "distance": 10,
+        "pace": "5:00 /km",
+        "notes": "Add any additional notes about the run here"
       }
       ...
     ],
@@ -559,7 +602,7 @@ export const sendGeminiRunPlan = createServerFn({ method: "POST" })
     });
 
     const response = await gemini.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: CURRENT_MODEL,
       contents: message,
     });
 
@@ -705,4 +748,83 @@ export const markPlanAsCompleted = createServerFn({ method: "POST" })
       .eq("id", data.plan_id);
     if (error) throw error;
     return data;
+  });
+
+export const getRunPlans = createServerFn({ method: "GET" }).handler(async () => {
+  const supabase = getSupabaseServerClient();
+  const { data: rows, error } = await supabase
+    .from("run_plans")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  if (!rows?.length) return [] as RunPlanListItem[];
+
+  const finalRunIds = [
+    ...new Set(
+      rows.map((row) => row.final_run).filter((id): id is string => !!id)
+    ),
+  ];
+
+  const runsById = new Map<string, Run>();
+  if (finalRunIds.length > 0) {
+    const { data: finalRuns, error: runsError } = await supabase
+      .from("runs")
+      .select("*")
+      .in("id", finalRunIds);
+    if (runsError) throw runsError;
+    for (const run of finalRuns ?? []) {
+      runsById.set(run.id, run as Run);
+    }
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    runs: [],
+    final_run: row.final_run ? runsById.get(row.final_run) ?? null : null,
+  })) as RunPlanListItem[];
+});
+
+export const getRunPlan = createServerFn({ method: "GET" })
+  .inputValidator((d: { planId: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const [planResult, runsResult] = await Promise.all([
+      supabase
+        .from("run_plans")
+        .select("*")
+        .eq("id", data.planId)
+        .single(),
+      supabase
+        .from("runs")
+        .select("*")
+        .eq("plan_id", data.planId)
+        .order("run_date", { ascending: true }),
+    ]);
+    if (planResult.error) throw planResult.error;
+    if (runsResult.error) throw runsResult.error;
+    return {
+      ...planResult.data,
+      runs: (runsResult.data ?? []) as Run[],
+    } as RunPlan;
+  });
+
+export const createRunPlan = createServerFn({ method: "POST" })
+  .inputValidator((d: { name?: string, llm_message_id: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error("Not authenticated");
+    }
+    const { data: row, error } = await supabase
+      .from("run_plans")
+      .insert({
+        created_by: user.id,
+        name: data.name,
+        llm_message_id: data.llm_message_id,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as RunPlan;
   });

@@ -3,7 +3,7 @@ import { getUser, login, signup, signInWithGoogle } from "~/serverFunctions";
 import { useRouter } from "@tanstack/react-router";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { useInvalidateMutation } from "./useInvalidateMutation";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export function useGetUser() {
   return useQuery({
@@ -19,9 +19,11 @@ export function useLogin() {
     mutationFn: useServerFn(login),
     queryKey: QueryCacheKeys.user(),
     onSuccess: async (
-      data: { error: boolean; message: string } | undefined
+      data: { error: boolean; message: string; session: { access_token: string; refresh_token: string } | null } | undefined
     ) => {
       if (!data?.error) {
+        localStorage.setItem('app-access-token', data?.session?.access_token ?? '');
+        localStorage.setItem('app-refresh-token', data?.session?.refresh_token ?? '');
         await router.invalidate();
         router.navigate({ to: "/" });
         return;
@@ -44,8 +46,7 @@ export function useGoogleLogin() {
     mutationFn: googleSignInFn,
     queryKey: QueryCacheKeys.user(),
     onSuccess: (data) => {
-      console.log("data", data);
-      if (data && "url" in data && data.url) {
+      if (!data?.error) {
         window.location.href = data.url;
       }
     },

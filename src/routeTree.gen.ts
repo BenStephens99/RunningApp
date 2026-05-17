@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedPlanPlanIdRouteImport } from './routes/_authed/plan.$planId'
 
 const StravaCallbackRoute = StravaCallbackRouteImport.update({
   id: '/strava-callback',
@@ -51,14 +52,20 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedPlanPlanIdRoute = AuthedPlanPlanIdRouteImport.update({
+  id: '/plan/$planId',
+  path: '/plan/$planId',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthedIndexRoute
   '/auth-callback': typeof AuthCallbackRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/strava-callback': typeof StravaCallbackRoute
-  '/': typeof AuthedIndexRoute
+  '/plan/$planId': typeof AuthedPlanPlanIdRoute
 }
 export interface FileRoutesByTo {
   '/auth-callback': typeof AuthCallbackRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/strava-callback': typeof StravaCallbackRoute
   '/': typeof AuthedIndexRoute
+  '/plan/$planId': typeof AuthedPlanPlanIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,16 +85,18 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/strava-callback': typeof StravaCallbackRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/plan/$planId': typeof AuthedPlanPlanIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/auth-callback'
     | '/login'
     | '/logout'
     | '/signup'
     | '/strava-callback'
-    | '/'
+    | '/plan/$planId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth-callback'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/strava-callback'
     | '/'
+    | '/plan/$planId'
   id:
     | '__root__'
     | '/_authed'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/strava-callback'
     | '/_authed/'
+    | '/_authed/plan/$planId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -155,7 +167,7 @@ declare module '@tanstack/react-router' {
     '/_authed': {
       id: '/_authed'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -166,15 +178,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/plan/$planId': {
+      id: '/_authed/plan/$planId'
+      path: '/plan/$planId'
+      fullPath: '/plan/$planId'
+      preLoaderRoute: typeof AuthedPlanPlanIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedPlanPlanIdRoute: typeof AuthedPlanPlanIdRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedPlanPlanIdRoute: AuthedPlanPlanIdRoute,
 }
 
 const AuthedRouteWithChildren =

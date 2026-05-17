@@ -1,16 +1,23 @@
+export type UserProfile = {
+  id: string;
+  active_plan: string | null;
+  strava_access_token: string | null;
+  strava_refresh_token: string | null;
+  strava_token_expires_at: string | null;
+}
+
 export type Run = {
   id: string;
   run_length: number;
   run_date: string;
   user_id: string;
   strava_link?: string | null;
+  plan_id: string;
+  pace: string;
+  notes: string;
 };
 
-export type RunPayload = {
-  run_length: number;
-  run_date: string;
-  strava_link?: string | null;
-};
+export type RunPayload = Pick<Run, "run_length" | "run_date" | "plan_id" | "pace" | "notes">;
 
 export type StravaActivity = {
   id: number;
@@ -35,9 +42,23 @@ export type RunPlanResponse = {
   plan: {
     date: string;
     distance: number;
+    pace: string;
+    notes: string;
   }[];
   comments: string;
 };
+
+export type RunPlan = {
+  id: string;
+  created_at: string;
+  created_by: string;
+  status: null | "completed" | "discarded";
+  name?: string;
+  runs: Run[];
+  final_run: Run | null;
+};
+
+export type RunPlanListItem = Omit<RunPlan, "runs">;
 
 export type MessageHistory = {
   id: string;

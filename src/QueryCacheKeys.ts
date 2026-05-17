@@ -1,8 +1,9 @@
 export const QueryCacheKeys = {
   user: () => ["user"],
-  runs: () => ["runs"],
   stravaToken: () => ["strava-token"],
   stravaAthlete: () => ["strava-athlete"],
   stravaActivities: () => ["strava-activities"],
   unconfirmedPlans: () => ["unconfirmed-plans"],
+  runPlans: () => ["run-plans"],
+  runPlan: (id: string) => ["run-plan", id],
 };

@@ -6,21 +6,61 @@ import {
   TextInput,
   Text,
   Divider,
+  Skeleton,
 } from "@mantine/core";
-import { useLogin, useGoogleLogin } from "~/hooks/auth";
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useLogin } from "~/hooks/auth";
+import { useEffect, useState } from "react";
+import { Link, useRouter } from "@tanstack/react-router";
+import { GoogleSignIn } from "./GoogleSignIn";
+import { getSession } from "~/serverFunctions";
 
 export function Login() {
   const login = useLogin();
-  const googleLogin = useGoogleLogin();
+  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [loadedAuth, setLoadedAuth] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      const accessToken = localStorage.getItem("app-access-token") ?? "";
+      const refreshToken = localStorage.getItem("app-refresh-token") ?? "";
+
+      let session = null;
+
+      try {
+        session = await getSession({
+          data: {
+            accessToken,
+            refreshToken,
+          },
+        });
+
+      } finally {
+        if (session) {
+          localStorage.setItem('app-access-token', session.access_token);
+          localStorage.setItem('app-refresh-token', session.refresh_token);
+          await router.invalidate();
+          router.navigate({ to: "/" });
+        } else {
+          setLoadedAuth(true);
+        }
+      }
+    })();
+  }, [router]);
+
+  if (!loadedAuth) {
+    return (
+      <Skeleton height={100} width={100} />
+    );
+  }
+
+
   return (
-    <Group justify="center" mt="20vh">
-      <Card withBorder w="400px" radius="md" p="md" shadow="sm">
+    <Group justify="center">
+      <Card w="400px" radius="md" p="md" bg="transparent">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -66,33 +106,7 @@ export function Login() {
               Login
             </Button>
             <Divider label="OR" labelPosition="center" />
-            <Button
-              variant="default"
-              leftSection={
-                <svg width="18" height="18" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-              }
-              onClick={() => googleLogin.mutate({})}
-              loading={googleLogin.isPending}
-            >
-              Continue with Google
-            </Button>
+            <GoogleSignIn />
           </Stack>
         </form>
       </Card>

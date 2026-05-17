@@ -12,47 +12,29 @@ import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { useGetUser } from "./auth";
 import { useQuery } from "@tanstack/react-query";
 
-export function useAddRun() {
-  return useInvalidateMutation({
-    mutationFn: useServerFn(addRun),
-    queryKey: QueryCacheKeys.runs(),
-  });
-}
-
-export function useGetRuns() {
-  const { data: user } = useGetUser();
-
-  return useQuery({
-    queryKey: QueryCacheKeys.runs(),
-    queryFn: useServerFn(getRuns),
-    enabled: !!user,
-  });
-}
-
-export function useDeleteRun() {
+export function useDeleteRun(planId: string) {
   return useInvalidateMutation({
     mutationFn: useServerFn(deleteRun),
-    queryKey: QueryCacheKeys.runs(),
+    queryKey: QueryCacheKeys.runPlan(planId),
   });
 }
 
-export function useUpdateRun() {
+export function useUpdateRun(planId: string) {
   return useInvalidateMutation({
     mutationFn: useServerFn(updateRun),
-    queryKey: QueryCacheKeys.runs(),
+    queryKey: QueryCacheKeys.runPlan(planId),
   });
 }
 
 export function useAddMultipleRuns() {
   return useInvalidateMutation({
     mutationFn: useServerFn(addMultipleRuns),
-    queryKey: QueryCacheKeys.runs(),
   });
 }
 
-export function useDeleteAllRuns() {
+export function useDeleteAllRuns(planId: string) {
   return useInvalidateMutation({
     mutationFn: useServerFn(deleteAllRuns),
-    queryKey: QueryCacheKeys.runs(),
+    queryKey: QueryCacheKeys.runPlan(planId),
   });
 }
