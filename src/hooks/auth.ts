@@ -25,7 +25,12 @@ export function useLogin() {
         localStorage.setItem('app-access-token', data?.session?.access_token ?? '');
         localStorage.setItem('app-refresh-token', data?.session?.refresh_token ?? '');
         await router.invalidate();
-        router.navigate({ to: "/" });
+        const lastVisitedPlanId = localStorage.getItem('last-visited-plan-id');
+        if (lastVisitedPlanId) {
+          router.navigate({ to: `/plan/${lastVisitedPlanId}` });
+        } else {
+          router.navigate({ to: "/" });
+        }
         return;
       }
     },

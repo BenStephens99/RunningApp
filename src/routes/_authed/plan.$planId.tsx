@@ -24,6 +24,8 @@ function RunsPage() {
   const generateRunInsights = useGenerateRunInsights(planId);
   const deleteRun = useDeleteRun(planId);
 
+  localStorage.setItem('last-visited-plan-id', planId);
+
   const runs = runPlan.data?.runs ?? [];
 
   const [stravaModalRunId, setStravaModalRunId] = useState<string | null>(null);
