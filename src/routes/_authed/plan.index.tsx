@@ -37,9 +37,9 @@ function Plans() {
 
   return (
     <Stack gap="md">
-      <Title order={2} c="var(--mantine-color-gray-2)">
+      <Text fw="bold" fz="sm" tt="uppercase" c="var(--mantine-color-gray-5)">
         Your plans
-      </Title>
+      </Text>
       <Stack gap="sm">
         {runPlans.data?.map((plan) => (
           <RunPlanItem key={plan.id} plan={plan} />
@@ -51,6 +51,7 @@ function Plans() {
 
 function RunPlanItem({ plan }: { plan: RunPlanListItem }) {
   const isCompleted = !!plan.final_run?.strava_link;
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [planName, setPlanName] = useState(plan.name ?? "");
@@ -77,18 +78,14 @@ function RunPlanItem({ plan }: { plan: RunPlanListItem }) {
         c="var(--mantine-color-gray-3)"
         style={{
           textDecoration: "none",
-          borderColor: isCompleted
-            ? "var(--mantine-color-green-6)"
-            : "var(--mantine-primary-color-5)",
-          borderWidth: isCompleted ? 2 : 1,
+          borderColor: "var(--mantine-primary-color-5)",
+          borderWidth: 1,
           transition: "border-color 150ms ease, transform 150ms ease",
         }}
         styles={{
           root: {
             "&:hover": {
-              borderColor: isCompleted
-                ? "var(--mantine-color-green-5)"
-                : "var(--mantine-color-dark-3)",
+              borderColor: "var(--mantine-color-dark-3)",
               transform: "translateY(-1px)",
             },
           },
@@ -100,12 +97,8 @@ function RunPlanItem({ plan }: { plan: RunPlanListItem }) {
               size="lg"
               radius="md"
               variant="light"
-              color={isCompleted ? "green" : "gray"}
-              bg={
-                isCompleted
-                  ? "var(--mantine-color-green-9)"
-                  : "var(--mantine-primary-color-5)"
-              }
+              color={isCompleted ? "green.3" : "gray"}
+              bg={"var(--mantine-primary-color-5)"}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -119,44 +112,36 @@ function RunPlanItem({ plan }: { plan: RunPlanListItem }) {
             <Stack gap={4} style={{ minWidth: 0 }}>
               <Text fw={600} c="var(--mantine-color-gray-1)" truncate>
                 {plan.name ?? "Untitled plan"}
-                {isCompleted && (
-                  <Badge
-                    variant="light"
-                    color="green"
-                    size="sm"
-                    ml="xs"
-                    leftSection={<IconCheck size={12} />}
-                  >
-                    Complete
-                  </Badge>
-                )}
               </Text>
               <Group gap="xs">
                 {plan.final_run ? (
                   <Text size="xs" c="dimmed">
-                    Final run · {plan.final_run.run_length} km
+                    {plan.final_run?.run_length} km · {dayjs(plan.final_run?.run_date).format("D MMM YYYY")}
                   </Text>
                 ) : (
                   <Text size="xs" c="dimmed">
                     No final run set
                   </Text>
                 )}
-                <Text size="xs" c="dimmed">
-                  · {dayjs(plan.created_at).format("D MMM YYYY")}
-                </Text>
               </Group>
             </Stack>
           </Group>
 
           <Group gap="xs" wrap="nowrap">
-            <ThemeIcon
-              variant="transparent"
-              color="gray"
-              size="sm"
-              aria-hidden
-            >
-              <IconChevronRight size={18} />
-            </ThemeIcon>
+            {isCompleted ? (
+              <Badge variant="light" color="green">
+                Completed
+              </Badge>
+            ) : (
+              <ThemeIcon
+                variant="transparent"
+                color="gray"
+                size="sm"
+                aria-hidden
+              >
+                <IconChevronRight size={18} />
+              </ThemeIcon>
+            )}
           </Group>
         </Group>
       </Card>

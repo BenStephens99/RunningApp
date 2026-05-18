@@ -897,12 +897,12 @@ export const deleteRunPlan = createServerFn({ method: "POST" })
   });
 
 export const updateRunPlan = createServerFn({ method: "POST" })
-  .inputValidator((d: { plan_id: string, name?: string }) => d)
+  .inputValidator((d: { plan_id: string, name?: string, final_run?: string }) => d)
   .handler(async ({ data }) => {
     const supabase = getSupabaseServerClient();
     const { data: row, error } = await supabase
       .from("run_plans")
-      .update({ name: data.name })
+      .update({ name: data.name, final_run: data.final_run })
       .eq("id", data.plan_id);
     if (error) throw error;
 

@@ -181,7 +181,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body suppressHydrationWarning>
-        <MantineProvider theme={theme}>
+        <MantineProvider theme={theme} forceColorScheme="dark">
           <Notifications />
           <QueryClientProvider client={queryClient}>
             <AppShell

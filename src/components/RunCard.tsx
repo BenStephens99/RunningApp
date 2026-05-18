@@ -71,7 +71,7 @@ export function RunCard({
               <ActionIcon
                 variant={run.strava_link ? "filled" : "light"}
                 size="lg"
-                color={run.strava_link ? "green" : "orange"}
+                color={run.strava_link ? "green" : "orange.5"}
                 bg={run.strava_link ? "green.6" : 'var(--mantine-primary-color-4)'}
                 radius="lg"
                 onClick={onStravaClick}

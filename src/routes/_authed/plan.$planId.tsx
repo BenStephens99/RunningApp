@@ -11,7 +11,10 @@ import { useRunGrouping } from "~/hooks/useRunGrouping";
 import { useStravaActivities } from "~/hooks/useStravaActivities";
 import { useAutoLinkStrava } from "~/hooks/useAutoLinkStrava";
 import { Run } from "~/types";
-import { useGetRunPlan } from "~/hooks/runPlans";
+import { useGetRunPlan, useUpdateRunPlan } from "~/hooks/runPlans";
+import { updateRunPlan } from "~/serverFunctions";
+import { useQueryClient } from "@tanstack/react-query";
+import { QueryCacheKeys } from "~/QueryCacheKeys";
 
 export const Route = createFileRoute('/_authed/plan/$planId')({
   component: RunsPage,
@@ -21,14 +24,31 @@ function RunsPage() {
   const planId = Route.useParams().planId;
   const runPlan = useGetRunPlan(planId);
   const updateRun = useUpdateRun(planId);
+  const updateRunPlan = useUpdateRunPlan(); 
   const generateRunInsights = useGenerateRunInsights(planId);
   const deleteRun = useDeleteRun(planId);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     localStorage.setItem("last-visited-plan-id", planId);
   }, [planId]);
 
   const runs = runPlan.data?.runs ?? [];
+
+  useEffect(() => {
+    if (runPlan.isSuccess && !runPlan.data?.final_run) {
+      updateRunPlan.mutate({
+        data: {
+          plan_id: planId,
+          final_run: runs[runs.length - 1].id.toString(),
+        },
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: QueryCacheKeys.runPlans() });
+        },
+      });
+    }
+  }, [runPlan.data]);
 
   const [stravaModalRunId, setStravaModalRunId] = useState<string | null>(null);
   const [
