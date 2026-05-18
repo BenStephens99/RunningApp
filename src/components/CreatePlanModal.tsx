@@ -13,7 +13,7 @@ import {
 } from "@mantine/core";
 import { Stack } from "@mantine/core";
 import { useState } from "react";
-import { MessageHistory, RunPayload } from "~/types";
+import { MessageHistory, CreateRunPayload } from "~/types";
 import { useAddMultipleRuns } from "~/hooks/runs";
 import { useCreateGeminiRunPlan } from "~/hooks/gemini";
 import { IconRun } from "@tabler/icons-react";
@@ -72,7 +72,7 @@ function ModalContent({
   const markPlanAsCompleted = useMarkPlanAsCompleted();
   const createRunPlan = useCreateRunPlan();
 
-  const [runs, setRuns] = useState<RunPayload[]>([]);
+  const [runs, setRuns] = useState<CreateRunPayload[]>([]);
   const [distanceGoal, setDistanceGoal] = useState(10);
   const [currentAge, setCurrentAge] = useState(20);
   const [daysOfWeek, setDaysOfWeek] = useState<string[]>([]);
@@ -150,7 +150,7 @@ function ModalContent({
               data: LLmPlanMessage.formatted_response.plan.map((run) => ({
                 run_date: run.date,
                 run_length: run.distance,
-                plan_id: createdPlan.id,
+                plan_id: Number(createdPlan.id),
                 pace: run.pace,
                 notes: run.notes,
               })),
