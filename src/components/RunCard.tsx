@@ -9,6 +9,7 @@ import {
   Box,
   Table,
   Divider,
+  Loader,
 } from "@mantine/core";
 import {
   IconPencil,
@@ -20,8 +21,10 @@ import {
   IconDotsVertical,
   IconDots,
   IconCheck,
+  IconSparkles,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
+import { useGenerateRunInsights } from "~/hooks/runs";
 import { Run, StravaActivity } from "~/types";
 import { formatDistance, formatTime, formatPace } from "~/utils/formatting";
 
@@ -40,12 +43,13 @@ export function RunCard({
   run,
   isNextRun,
   stravaActivity,
-  isLoadingStravaActivities,
   onStravaClick,
   onEditClick,
   onDeleteClick,
   setCardRef,
 }: RunCardProps) {
+  const generateRunInsights = useGenerateRunInsights(run.plan_id)
+
   return (
     <div ref={setCardRef} style={{ scrollMargin: "175px" }}>
       <Card
@@ -56,7 +60,7 @@ export function RunCard({
         c={'var(--mantine-color-gray-3)'}
         style={{
           borderColor: isNextRun
-            ? "var(--mantine-color-blue-5)"
+            ? "var(--mantine-color-blue-7)"
             : "var(--mantine-primary-color-5)",
           borderWidth: isNextRun ? 2 : 1,
         }}
@@ -68,7 +72,7 @@ export function RunCard({
                 variant={run.strava_link ? "filled" : "light"}
                 size="lg"
                 color={run.strava_link ? "green" : "orange"}
-                bg={run.strava_link ? "green.6" : 'var(--mantine-primary-color-3)'}
+                bg={run.strava_link ? "green.6" : 'var(--mantine-primary-color-4)'}
                 radius="lg"
                 onClick={onStravaClick}
               >
@@ -117,7 +121,7 @@ export function RunCard({
             </Group>
             {run.strava_link && (
               <Card shadow="xs" radius="md" bg='var(--mantine-primary-color-5)' c='var(--mantine-color-gray-3)'>
-                <Group justify="center" gap="lg" align="center">
+                <Group justify="flex-start" gap="lg" align="center">
                   {stravaActivity?.distance && (
                     <Stack gap="0">
                       <Text fz="xs" fw={500} c="dimmed">Distance</Text>
@@ -136,10 +140,22 @@ export function RunCard({
                       <Text fz="sm" fw={500}>{formatTime(stravaActivity?.elapsed_time)}</Text>
                     </Stack>
                   )}
-                  <Group ml="auto" align="center">
-                    <IconCheck size={20} color="var(--mantine-color-green-5)" />
-                  </Group>
                 </Group>
+                {(run.ai_insights || generateRunInsights.isPending) && (
+                  <>
+                    {generateRunInsights.isPending ? (
+                      <>
+                        <Box h="75px">
+                          <Group h="100%" align="center" justify="center">
+                            <Loader type="dots" color="var(--mantine-color-green-5)" />
+                          </Group>
+                        </Box>
+                      </>
+                    ) : (
+                      <Text fz="sm" mt="sm" lh={1.2}>{run.ai_insights}</Text>
+                    )}
+                  </>
+                )}
               </Card>
             )}
 

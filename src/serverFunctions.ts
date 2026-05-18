@@ -5,12 +5,12 @@ import { GoogleGenAI } from "@google/genai";
 import {
   MessageHistory,
   Run,
-  RunPayload,
   RunPlanPayload,
   RunPlanResponse,
   StravaActivity,
   RunPlan,
   RunPlanListItem,
+  CreateRunPayload,
 } from "./types";
 
 enum GEMINI_MODELS {
@@ -190,7 +190,7 @@ export const deleteAllRuns = createServerFn({ method: "POST" }).handler(
 );
 
 export const addRun = createServerFn({ method: "POST" })
-  .inputValidator((d: RunPayload) => d)
+  .inputValidator((d: CreateRunPayload) => d)
   .handler(async ({ data }) => {
     const supabase = getSupabaseServerClient();
 
@@ -219,36 +219,20 @@ export const addRun = createServerFn({ method: "POST" })
 
 export const updateRun = createServerFn({ method: "POST" })
   .inputValidator(
-    (d: {
-      id: string;
-      run_length: number;
-      run_date: string;
-      strava_link?: string | null;
-    }) => d
+    (d: Partial<Run>) => d
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data: run }) => {
     const supabase = getSupabaseServerClient();
-    const updateData: {
-      run_length: number;
-      run_date: string;
-      strava_link?: string | null;
-    } = {
-      run_length: data.run_length,
-      run_date: data.run_date,
-    };
-    if (data.strava_link !== undefined) {
-      updateData.strava_link = data.strava_link;
-    }
-    const { error } = await supabase
+    const { data: row, error } = await supabase
       .from("runs")
-      .update(updateData)
-      .eq("id", data.id);
+      .update(run)
+      .eq("id", run.id);
     if (error) throw error;
-    return data;
+    return row as unknown as Run;
   });
 
 export const addMultipleRuns = createServerFn({ method: "POST" })
-  .inputValidator((d: RunPayload[]) => d)
+  .inputValidator((d: CreateRunPayload[]) => d)
   .handler(async ({ data }) => {
     const supabase = getSupabaseServerClient();
 
@@ -558,6 +542,49 @@ export const sendGeminiMessage = createServerFn({ method: "POST" })
 
     return response.text;
   });
+
+  export const generateRunInsights = createServerFn({ method: "POST" })
+    .inputValidator((d: { run: Partial<Run>, stravaActivity: StravaActivity }) => d)
+    .handler(async ({ data }) => {
+      const supabase = getSupabaseServerClient();
+      const message = `
+      You are an expert running coach, the user has a running plan they are following, below is the target information for their run and the actual strava activity information they completed.
+      Generate a short message for the user to encourage them and possibly give them some tips to improve their next run. Dont make it more than 2 - 3 sentences.
+      They are able to see their strava insights so dont just repeat them its fine to say their pace was impressive but dont just quote the exact numbers. 
+      If they have achieved the goal or got close enough, dont suggest any tips for their next run.
+      Dont start the message with "Great" or "You crushed".
+
+      Target information:
+      - Run length: ${data.run.run_length}
+      - Run pace: ${data.run.pace}
+      - Run notes: ${data.run.notes}
+
+      Actual strava activity information:
+      - Strava activity distance: ${data.stravaActivity.distance}
+      - Strava activity time: ${data.stravaActivity.moving_time}
+      - Strava activity type: ${data.stravaActivity.type}
+      `;
+
+      const response = await gemini.models.generateContent({
+        model: CURRENT_MODEL,
+        contents: message,
+      });
+
+      if (!response.text) {
+        throw new Error("No response from Gemini");
+      }
+
+      const { data: row, error } = await supabase
+        .from("runs")
+        .update({ ai_insights: response.text })
+        .eq("id", data.run.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return row as Run;
+    });
 
 export const sendGeminiRunPlan = createServerFn({ method: "POST" })
   .inputValidator((d: RunPlanPayload) => d)

@@ -1,6 +1,6 @@
 import { Stack } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
-import { useDeleteRun, useUpdateRun } from "~/hooks/runs";
+import { useDeleteRun, useGenerateRunInsights, useUpdateRun } from "~/hooks/runs";
 import { StravaActivityModal } from "~/components/StravaActivityModal";
 import { EditRunModal } from "~/components/EditRunModal";
 import { DeleteConfirmModal } from "~/components/DeleteConfirmModal";
@@ -21,6 +21,7 @@ function RunsPage() {
   const planId = Route.useParams().planId;
   const runPlan = useGetRunPlan(planId);
   const updateRun = useUpdateRun(planId);
+  const generateRunInsights = useGenerateRunInsights(planId);
   const deleteRun = useDeleteRun(planId);
 
   const runs = runPlan.data?.runs ?? [];
@@ -72,7 +73,7 @@ function RunsPage() {
     }
   }, [runPlan.data, nextRunId]);
 
-  useAutoLinkStrava(stravaActivities, runs, updateRun);
+  useAutoLinkStrava(stravaActivities, runs, updateRun, generateRunInsights);
 
   const handleStravaClick = (run: Run) => {
     setStravaModalRunId(run.id);

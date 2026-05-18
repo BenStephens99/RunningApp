@@ -2,27 +2,26 @@ import { useInvalidateMutation } from "./useInvalidateMutation";
 import { useServerFn } from "@tanstack/react-start";
 import {
   addMultipleRuns,
-  addRun,
   deleteAllRuns,
   deleteRun,
-  getRuns,
+  generateRunInsights,
   updateRun,
 } from "~/serverFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
-import { useGetUser } from "./auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { Run, RunPlan, StravaActivity } from "~/types";
 
-export function useDeleteRun(planId: string) {
+export function useDeleteRun(planId: number | string) {
   return useInvalidateMutation({
     mutationFn: useServerFn(deleteRun),
-    queryKey: QueryCacheKeys.runPlan(planId),
+    queryKey: QueryCacheKeys.runPlan(planId.toString()),
   });
 }
 
-export function useUpdateRun(planId: string) {
+export function useUpdateRun(planId: number | string) {
   return useInvalidateMutation({
     mutationFn: useServerFn(updateRun),
-    queryKey: QueryCacheKeys.runPlan(planId),
+    queryKey: QueryCacheKeys.runPlan(planId.toString()),
   });
 }
 
@@ -32,9 +31,18 @@ export function useAddMultipleRuns() {
   });
 }
 
-export function useDeleteAllRuns(planId: string) {
+export function useDeleteAllRuns(planId: number | string) {
   return useInvalidateMutation({
     mutationFn: useServerFn(deleteAllRuns),
-    queryKey: QueryCacheKeys.runPlan(planId),
+    queryKey: QueryCacheKeys.runPlan(planId.toString()),
+  });
+}
+
+export function useGenerateRunInsights(planId: number | string) {
+  const queryClient = useQueryClient();
+
+  return useInvalidateMutation({
+    mutationFn: useServerFn(generateRunInsights),
+    queryKey: QueryCacheKeys.runPlan(planId.toString()),
   });
 }

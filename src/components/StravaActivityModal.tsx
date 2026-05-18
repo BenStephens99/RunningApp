@@ -8,12 +8,15 @@ import {
   Loader,
   Alert,
   Table,
+  Avatar,
+  ActionIcon,
 } from "@mantine/core";
 import { useServerFn } from "@tanstack/react-start";
 import {
   getStravaAuthUrl,
   getStravaActivities,
   getStravaAccessToken,
+  getStravaAthlete,
 } from "~/serverFunctions";
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -29,9 +32,10 @@ import {
   formatDistance,
   formatTimeShort,
   formatPace,
+  formatTime,
 } from "~/utils/formatting";
 import styles from "./StravaActivityModal.module.css";
-import { Run } from "~/types";
+import { Run, StravaActivity, StravaAthlete } from "~/types";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 
 export function StravaActivityModal({
@@ -51,6 +55,7 @@ export function StravaActivityModal({
   const getAuthUrl = useServerFn(getStravaAuthUrl);
   const getActivities = useServerFn(getStravaActivities);
   const getToken = useServerFn(getStravaAccessToken);
+  const getAthlete = useServerFn(getStravaAthlete);
 
   const {
     data: tokenData,
@@ -61,6 +66,8 @@ export function StravaActivityModal({
     queryFn: () => getToken(),
     enabled: opened,
   });
+
+
 
   useEffect(() => {
     if (opened) {
@@ -75,6 +82,12 @@ export function StravaActivityModal({
   } = useQuery({
     queryKey: QueryCacheKeys.stravaActivities(),
     queryFn: () => getActivities({ data: 20 }),
+    enabled: opened && tokenData?.hasToken === true,
+  });
+
+  const { data: stravaAthlete, isLoading: isLoadingStravaAthlete } = useQuery({
+    queryKey: QueryCacheKeys.stravaAthlete(),
+    queryFn: () => getAthlete(),
     enabled: opened && tokenData?.hasToken === true,
   });
 
@@ -153,6 +166,15 @@ export function StravaActivityModal({
         </Text>
       }
       size="lg"
+      c='var(--mantine-color-gray-3)'
+      styles={{
+        header: {
+          backgroundColor: 'var(--mantine-primary-color-8)',
+        },
+        body: {
+          backgroundColor: 'var(--mantine-primary-color-8)',
+        },
+      }}
     >
       <Stack gap="md">
         {tokenLoading && (
@@ -219,11 +241,10 @@ export function StravaActivityModal({
                             key={activity.id}
                             shadow="xs"
                             padding="sm"
-                            className={`${styles.activityCard} ${
-                              isSelected ? styles.activityCardSelected : ""
-                            }`}
+                            className={`${styles.activityCard} ${isSelected ? styles.activityCardSelected : ""
+                              }`}
                             onClick={() => handleSelectActivity(activity.id)}
-                            withBorder
+                            withBorder={false}
                           >
                             <Stack gap="xs">
                               <Group align="center" gap="xs">
@@ -327,102 +348,7 @@ export function StravaActivityModal({
                       {groupedActivities.thisWeek.map((activity) => {
                         const isSelected = selectedActivityId === activity.id;
                         return (
-                          <Card
-                            key={activity.id}
-                            shadow="xs"
-                            padding="sm"
-                            className={`${styles.activityCard} ${
-                              isSelected ? styles.activityCardSelected : ""
-                            }`}
-                            onClick={() => handleSelectActivity(activity.id)}
-                            withBorder
-                          >
-                            <Stack gap="xs">
-                              <Group align="center" gap="xs">
-                                {isSelected && (
-                                  <IconCheck
-                                    size={18}
-                                    color="var(--mantine-color-green-6)"
-                                  />
-                                )}
-                                <Text fz="sm" fw="bold">
-                                  {dayjs(activity.start_date).format(
-                                    "MMM DD, YYYY HH:mm"
-                                  )}
-                                </Text>
-                                -
-                                <Text fz="xs" c="dimmed">
-                                  {activity.name || "Untitled Activity"}
-                                </Text>
-                                {isSelected && (
-                                  <Text fz="xs" c="dimmed" fs="italic">
-                                    (Click to unlink)
-                                  </Text>
-                                )}
-                              </Group>
-                              <Table>
-                                <Table.Tbody>
-                                  <Table.Tr>
-                                    <Table.Td>
-                                      <Group gap="xs" align="center">
-                                        <IconClock
-                                          size={18}
-                                          color="var(--mantine-color-gray-6)"
-                                        />
-                                        <Text fz="sm" c="dimmed">
-                                          Time
-                                        </Text>
-                                      </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                      <Text fz="sm" c="dimmed">
-                                        {formatTimeShort(activity.moving_time)}
-                                      </Text>
-                                    </Table.Td>
-                                  </Table.Tr>
-                                  <Table.Tr>
-                                    <Table.Td>
-                                      <Group gap="xs" align="center">
-                                        <IconRun
-                                          size={18}
-                                          color="var(--mantine-color-gray-6)"
-                                        />
-                                        <Text fz="sm" c="dimmed">
-                                          Distance
-                                        </Text>
-                                      </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                      <Text fz="sm" c="dimmed">
-                                        {formatDistance(activity.distance)} km
-                                      </Text>
-                                    </Table.Td>
-                                  </Table.Tr>
-                                  <Table.Tr>
-                                    <Table.Td>
-                                      <Group gap="xs" align="center">
-                                        <IconBrandSpeedtest
-                                          size={18}
-                                          color="var(--mantine-color-gray-6)"
-                                        />
-                                        <Text fz="sm" c="dimmed">
-                                          Pace
-                                        </Text>
-                                      </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                      <Text fz="sm" c="dimmed">
-                                        {formatPace(
-                                          activity.distance,
-                                          activity.moving_time
-                                        )}
-                                      </Text>
-                                    </Table.Td>
-                                  </Table.Tr>
-                                </Table.Tbody>
-                              </Table>
-                            </Stack>
-                          </Card>
+                          <ActivityCard activity={activity} isSelected={isSelected} onSelect={handleSelectActivity} stravaAthlete={stravaAthlete} />
                         );
                       })}
                     </Stack>
@@ -439,102 +365,7 @@ export function StravaActivityModal({
                       {groupedActivities.older.map((activity) => {
                         const isSelected = selectedActivityId === activity.id;
                         return (
-                          <Card
-                            key={activity.id}
-                            shadow="xs"
-                            padding="sm"
-                            className={`${styles.activityCard} ${
-                              isSelected ? styles.activityCardSelected : ""
-                            }`}
-                            onClick={() => handleSelectActivity(activity.id)}
-                            withBorder
-                          >
-                            <Stack gap="xs">
-                              <Group align="center" gap="xs">
-                                {isSelected && (
-                                  <IconCheck
-                                    size={18}
-                                    color="var(--mantine-color-green-6)"
-                                  />
-                                )}
-                                <Text fz="sm" fw="bold">
-                                  {dayjs(activity.start_date).format(
-                                    "MMM DD, YYYY HH:mm"
-                                  )}
-                                </Text>
-                                -
-                                <Text fz="xs" c="dimmed">
-                                  {activity.name || "Untitled Activity"}
-                                </Text>
-                                {isSelected && (
-                                  <Text fz="xs" c="dimmed" fs="italic">
-                                    (Click to unlink)
-                                  </Text>
-                                )}
-                              </Group>
-                              <Table>
-                                <Table.Tbody>
-                                  <Table.Tr>
-                                    <Table.Td>
-                                      <Group gap="xs" align="center">
-                                        <IconClock
-                                          size={18}
-                                          color="var(--mantine-color-gray-6)"
-                                        />
-                                        <Text fz="sm" c="dimmed">
-                                          Time
-                                        </Text>
-                                      </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                      <Text fz="sm" c="dimmed">
-                                        {formatTimeShort(activity.moving_time)}
-                                      </Text>
-                                    </Table.Td>
-                                  </Table.Tr>
-                                  <Table.Tr>
-                                    <Table.Td>
-                                      <Group gap="xs" align="center">
-                                        <IconRun
-                                          size={18}
-                                          color="var(--mantine-color-gray-6)"
-                                        />
-                                        <Text fz="sm" c="dimmed">
-                                          Distance
-                                        </Text>
-                                      </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                      <Text fz="sm" c="dimmed">
-                                        {formatDistance(activity.distance)} km
-                                      </Text>
-                                    </Table.Td>
-                                  </Table.Tr>
-                                  <Table.Tr>
-                                    <Table.Td>
-                                      <Group gap="xs" align="center">
-                                        <IconBrandSpeedtest
-                                          size={18}
-                                          color="var(--mantine-color-gray-6)"
-                                        />
-                                        <Text fz="sm" c="dimmed">
-                                          Pace
-                                        </Text>
-                                      </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                      <Text fz="sm" c="dimmed">
-                                        {formatPace(
-                                          activity.distance,
-                                          activity.moving_time
-                                        )}
-                                      </Text>
-                                    </Table.Td>
-                                  </Table.Tr>
-                                </Table.Tbody>
-                              </Table>
-                            </Stack>
-                          </Card>
+                          <ActivityCard activity={activity} isSelected={isSelected} onSelect={handleSelectActivity} stravaAthlete={stravaAthlete} />
                         );
                       })}
                     </Stack>
@@ -554,3 +385,48 @@ export function StravaActivityModal({
     </Modal>
   );
 }
+
+const ActivityCard = ({ activity, isSelected, onSelect, stravaAthlete }: { activity: StravaActivity, isSelected: boolean, onSelect: (activityId: number) => void, stravaAthlete: StravaAthlete }) => {
+  return (
+    <Card
+      key={activity.id}
+      shadow="xs"
+      padding="sm"
+      className={`${styles.activityCard} ${isSelected ? styles.activityCardSelected : ""
+        }`}
+      onClick={() => onSelect(activity.id)}
+      withBorder
+    >
+      <Stack gap="sm">
+        <Group gap="sm">
+          {isSelected ? (
+            <ActionIcon variant="light" size="30px" color="green" radius="lg">
+              <IconCheck size={20} />
+            </ActionIcon>
+          ) : (
+            <Avatar src={stravaAthlete.profile} alt={stravaAthlete.firstname + " " + stravaAthlete.lastname} size="30px" />
+          )}
+          <Stack gap="0">
+            <Text fz="sm" fw="500">{stravaAthlete.firstname + " " + stravaAthlete.lastname}</Text>
+            <Text fz="xs" c="dimmed" fw="500">{dayjs(activity.start_date).format("MMM DD, YYYY HH:mm")}</Text>
+          </Stack>
+        </Group>
+        <Text fz="md" fw="500">{activity.name}</Text>
+        <Group gap="xl">
+          <Stack gap="0">
+            <Text fz="xs" c="dimmed" fw="500">Distance</Text>
+            <Text fz="sm" fw="500">{formatDistance(activity.distance)} km</Text>
+          </Stack>
+          <Stack gap="0">
+            <Text fz="xs" c="dimmed" fw="500">Pace</Text>
+            <Text fz="sm" fw="500">{formatPace(activity.distance, activity.moving_time)}</Text>
+          </Stack>
+          <Stack gap="0">
+            <Text fz="xs" c="dimmed" fw="500">Time</Text>
+            <Text fz="sm" fw="500">{formatTime(activity.moving_time)}</Text>
+          </Stack>
+        </Group>
+      </Stack>
+    </Card>
+  );
+};

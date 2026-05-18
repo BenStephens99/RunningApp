@@ -3,6 +3,9 @@
   transition:
     border-color 0.2s ease,
     border-width 0.2s ease;
+  background-color: var(--mantine-primary-color-6);
+  color: var(--mantine-color-gray-3);
+  border: 1px solid var(--mantine-primary-color-7);
 }
 
 .activityCard:hover {
@@ -13,7 +16,6 @@
 .activityCardSelected {
   border-color: var(--mantine-color-green-5) !important;
   border-width: 2px !important;
-  background-color: var(--mantine-color-green-0);
 }
 
 .activityCardSelected:hover {
