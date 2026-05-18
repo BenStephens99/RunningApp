@@ -152,7 +152,7 @@ export function RunCard({
                         </Box>
                       </>
                     ) : (
-                      <Text fz="sm" mt="sm" lh={1.2}>{run.ai_insights}</Text>
+                      <Text fz="xs" mt="sm" lh={1.2} fw="500">{run.ai_insights}</Text>
                     )}
                   </>
                 )}

@@ -130,6 +130,9 @@ function ModalContent({
           onSuccess: () => {
             unconfirmedPlans.refetch();
           },
+          onError: (error) => {
+            setErrorMessage(error.message);
+          },
         }
       );
     }
@@ -231,17 +234,12 @@ function ModalContent({
                 <Table.Th>Date</Table.Th>
                 <Table.Th>
                   <Text fz="sm" fw="bold" ta="right">
-                    Pace
-                  </Text>
-                </Table.Th>
-                <Table.Th>
-                  <Text fz="sm" fw="bold" ta="right">
-                    Notes
-                  </Text>
-                </Table.Th>
-                <Table.Th>
-                  <Text fz="sm" fw="bold" ta="right">
                     Distance (km)
+                  </Text>
+                </Table.Th>
+                <Table.Th>
+                  <Text fz="sm" fw="bold" ta="right">
+                    Pace
                   </Text>
                 </Table.Th>
               </Table.Tr>
@@ -254,19 +252,16 @@ function ModalContent({
                   </Table.Td>
                   <Table.Td>
                     <Text fz="sm" ta="right">
-                      {run.pace}
-                    </Text>
-                  </Table.Td>
-                  <Table.Td>
-                    <Text fz="sm" ta="right">
-                      {run.notes}
-                    </Text>
-                  </Table.Td>
-                  <Table.Td>
-                    <Text fz="sm" ta="right">
                       {run.distance}
                     </Text>
                   </Table.Td>
+                  <Table.Td>
+                    <Text fz="sm" ta="right">
+                      {run.pace}
+                    </Text>
+                  </Table.Td>
+   
+ 
                 </Table.Tr>
               ))}
             </Table.Tbody>

@@ -543,11 +543,11 @@ export const sendGeminiMessage = createServerFn({ method: "POST" })
     return response.text;
   });
 
-  export const generateRunInsights = createServerFn({ method: "POST" })
-    .inputValidator((d: { run: Partial<Run>, stravaActivity: StravaActivity }) => d)
-    .handler(async ({ data }) => {
-      const supabase = getSupabaseServerClient();
-      const message = `
+export const generateRunInsights = createServerFn({ method: "POST" })
+  .inputValidator((d: { run: Partial<Run>, stravaActivity: StravaActivity }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const message = `
       You are an expert running coach, the user has a running plan they are following, below is the target information for their run and the actual strava activity information they completed.
       Generate a short message for the user to encourage them and possibly give them some tips to improve their next run. Dont make it more than 2 - 3 sentences.
       They are able to see their strava insights so dont just repeat them its fine to say their pace was impressive but dont just quote the exact numbers. 
@@ -565,26 +565,26 @@ export const sendGeminiMessage = createServerFn({ method: "POST" })
       - Strava activity type: ${data.stravaActivity.type}
       `;
 
-      const response = await gemini.models.generateContent({
-        model: CURRENT_MODEL,
-        contents: message,
-      });
-
-      if (!response.text) {
-        throw new Error("No response from Gemini");
-      }
-
-      const { data: row, error } = await supabase
-        .from("runs")
-        .update({ ai_insights: response.text })
-        .eq("id", data.run.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return row as Run;
+    const response = await gemini.models.generateContent({
+      model: CURRENT_MODEL,
+      contents: message,
     });
+
+    if (!response.text) {
+      throw new Error("No response from Gemini");
+    }
+
+    const { data: row, error } = await supabase
+      .from("runs")
+      .update({ ai_insights: response.text })
+      .eq("id", data.run.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return row as Run;
+  });
 
 export const sendGeminiRunPlan = createServerFn({ method: "POST" })
   .inputValidator((d: RunPlanPayload) => d)
@@ -601,7 +601,18 @@ export const sendGeminiRunPlan = createServerFn({ method: "POST" })
     The plan should be based on the user's current fitness level, age and goals.
     Feel free to add a small comments section to explain the plan. and any other relevant information.
 
-    Return the plan in the following JSON format only, (the date must be in the format of YYYY-MM-DD and the distance must be in kilometers and just the number, notes can be flexible but keep them short, pace goal should be in the format of mm:ss /km, ): 
+    Make sure you generate a run for every day labled between the start date and race date based on the days of week, unless you think it should be a rest day.
+
+    Dont include a day as 0km labled rest day, just skip adding a day if you think it should be a rest day.
+
+    Dont forget a tapering phase. As a rough guide a half marathon would have a 10-14 day taper phase.
+
+    For the per run notes. Say what the benefit will be (ie Long slow run to build base endurance). If its an interval session, make it clear what the intervals should be in this section 
+    formatted like: "Intervals: 8 x 400m at 5:00 /km (1:30 rest between intervals)". 
+
+    If a run is not an interval session, NEVER include pace or distance in the notes section for that run.
+
+    Return the plan in the following JSON format only, (the date must be in the format of YYYY-MM-DD and the distance must be in kilometers and just the number, notes can be flexible, pace goal should be in the format of mm:ss /km, ): 
   {
     "plan": [
       {
@@ -628,10 +639,27 @@ export const sendGeminiRunPlan = createServerFn({ method: "POST" })
       },
     });
 
-    const response = await gemini.models.generateContent({
-      model: CURRENT_MODEL,
-      contents: message,
-    });
+    let response: any;
+
+    try {
+      response = await gemini.models.generateContent({
+        model: CURRENT_MODEL,
+        contents: message,
+      });
+    } catch (error) {
+      await updateMessageHistory({
+        data: {
+          id: messageHistory.id,
+          status: "error",
+          raw_response: (error as Error).message,
+          formatted_response: {
+            plan: [],
+            comments: "",
+          },
+        },
+      });
+      throw new Error("Error generating Gemini response");
+    }
 
     if (!response.text) {
       await updateMessageHistory({
@@ -854,4 +882,29 @@ export const createRunPlan = createServerFn({ method: "POST" })
       .single();
     if (error) throw error;
     return row as RunPlan;
+  });
+
+export const deleteRunPlan = createServerFn({ method: "POST" })
+  .inputValidator((d: { plan_id: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const { error } = await supabase
+      .from("run_plans")
+      .delete()
+      .eq("id", data.plan_id);
+    if (error) throw error;
+    return data;
+  });
+
+export const updateRunPlan = createServerFn({ method: "POST" })
+  .inputValidator((d: { plan_id: string, name?: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const { data: row, error } = await supabase
+      .from("run_plans")
+      .update({ name: data.name })
+      .eq("id", data.plan_id);
+    if (error) throw error;
+
+    return row;
   });
