@@ -24,7 +24,9 @@ function RunsPage() {
   const generateRunInsights = useGenerateRunInsights(planId);
   const deleteRun = useDeleteRun(planId);
 
-  localStorage.setItem('last-visited-plan-id', planId);
+  useEffect(() => {
+    localStorage.setItem("last-visited-plan-id", planId);
+  }, [planId]);
 
   const runs = runPlan.data?.runs ?? [];
 

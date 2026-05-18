@@ -44,6 +44,7 @@ export function Login() {
           localStorage.setItem('app-refresh-token', session.refresh_token);
           await router.invalidate();
           const lastVisitedPlanId = localStorage.getItem('last-visited-plan-id');
+          console.log('lastVisitedPlanId', lastVisitedPlanId);
           if (lastVisitedPlanId) {
             router.navigate({ to: `/plan/${lastVisitedPlanId}` });
           } else {

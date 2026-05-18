@@ -9,7 +9,7 @@ export function Footer() {
     useDisclosure(false);
 
   const isHome = useRouterState({
-    select: (state) => state.location.pathname === "/",
+    select: (state) => state.location.pathname === "/plan",
   });
 
   return (
@@ -29,7 +29,7 @@ export function Footer() {
         ) : (
           <ActionIcon
             component={Link}
-            to="/"
+            to="/plan"
             size="xl"
             color="var(--mantine-primary-color-4)"
             radius="xl"
