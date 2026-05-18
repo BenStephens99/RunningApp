@@ -25,12 +25,6 @@ export const Route = createFileRoute("/_authed/")({
 function Home() {
   const runPlans = useGetRunPlans();
   const router = useRouter();
-  
-  const lastVisitedPlanId = localStorage.getItem('last-visited-plan-id');
-
-  if (lastVisitedPlanId) {
-    router.navigate({ to: `/plan/${lastVisitedPlanId}` });
-  }
 
   return (
     <Stack gap="md">
