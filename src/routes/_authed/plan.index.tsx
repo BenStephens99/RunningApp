@@ -41,8 +41,7 @@ function RunPlanItem({ plan }: { plan: RunPlanListItem }) {
   return (
     <Card
       component={Link}
-      to="/plan/$planId"
-      params={{ planId: plan.id }}
+      to={`/plan/${plan.id}`}
       shadow="sm"
       radius="md"
       padding="md"
