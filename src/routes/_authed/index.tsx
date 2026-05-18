@@ -12,7 +12,7 @@ import {
   IconChevronRight,
   IconRun,
 } from "@tabler/icons-react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import dayjs from "dayjs";
 
 import { useGetRunPlans } from "~/hooks/runPlans";
@@ -24,6 +24,13 @@ export const Route = createFileRoute("/_authed/")({
 
 function Home() {
   const runPlans = useGetRunPlans();
+  const router = useRouter();
+  
+  const lastVisitedPlanId = localStorage.getItem('last-visited-plan-id');
+
+  if (lastVisitedPlanId) {
+    router.navigate({ to: `/plan/${lastVisitedPlanId}` });
+  }
 
   return (
     <Stack gap="md">
