@@ -159,7 +159,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
   const theme = createTheme({
     cursorType: "pointer",
-    primaryColor: "indigo",
+    primaryColor: "dark",
     primaryShade: 6,
   });
 
@@ -189,11 +189,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <Notifications />
           <QueryClientProvider client={queryClient}>
             <AppShell
-              bg="var(--mantine-primary-color-0)"
+              bg="var(--mantine-primary-color-7)"
               header={{ height: 60 }}
               footer={{ height: 80 }}
             >
-              <AppShell.Header bg="var(--mantine-primary-color-4)">
+              <AppShell.Header bg="var(--mantine-primary-color-8)" withBorder={false}>
                 <Header />
               </AppShell.Header>
               <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
@@ -201,7 +201,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                   {children}
                 </Box>
               </AppShell.Main>
-              <AppShell.Footer bg="var(--mantine-primary-color-4)">
+              <AppShell.Footer bg="var(--mantine-primary-color-8)" withBorder={false}>
                 <React.Suspense fallback={<Skeleton height={60} />}>
                   <Footer />
                 </React.Suspense>

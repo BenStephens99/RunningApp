@@ -6,6 +6,9 @@ import {
   ActionIcon,
   Skeleton,
   Menu,
+  Box,
+  Table,
+  Divider,
 } from "@mantine/core";
 import {
   IconPencil,
@@ -15,6 +18,8 @@ import {
   IconClock,
   IconBrandSpeedtest,
   IconDotsVertical,
+  IconDots,
+  IconCheck,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { Run, StravaActivity } from "~/types";
@@ -46,93 +51,100 @@ export function RunCard({
       <Card
         shadow="xs"
         radius="md"
-        bg={run.strava_link ? "green.0" : "white"}
+        bg='var(--mantine-primary-color-6)'
         withBorder
+        c={'var(--mantine-color-gray-3)'}
         style={{
           borderColor: isNextRun
             ? "var(--mantine-color-blue-5)"
-            : run.strava_link
-              ? "var(--mantine-color-green-3)"
-              : "var(--mantine-color-gray-3)",
+            : "var(--mantine-primary-color-5)",
           borderWidth: isNextRun ? 2 : 1,
         }}
       >
-        <Group gap="xs" wrap="nowrap">
-          <ActionIcon
-            variant={run.strava_link ? "filled" : "light"}
-            size="lg"
-            color={run.strava_link ? "green" : "orange"}
-            bg={run.strava_link ? "green.4" : "orange.0"}
-            onClick={onStravaClick}
-          >
-            <IconBrandStrava size={20} />
-          </ActionIcon>
-          <Stack gap="xs" ml="xs">
-            <Group wrap="nowrap">
-              <Text fw="bold" fz="md">
-                {run.run_length} km
-              </Text>
-              <Text fz="sm">
-                {dayjs(run.run_date).format("ddd, DD MMMM YYYY")}
-              </Text>
+        <>
+          <Stack gap="sm">
+            <Group gap="md" wrap="nowrap" align="center">
+              <ActionIcon
+                variant={run.strava_link ? "filled" : "light"}
+                size="lg"
+                color={run.strava_link ? "green" : "orange"}
+                bg={run.strava_link ? "green.6" : 'var(--mantine-primary-color-3)'}
+                radius="lg"
+                onClick={onStravaClick}
+              >
+                <IconBrandStrava size={20} />
+              </ActionIcon>
+              <Text fz="xs">{dayjs(run.run_date).format("ddd, DD MMMM YYYY")}</Text>
+              <Box ml="auto">
+                <Menu>
+                  <Menu.Target>
+                    <ActionIcon variant="subtle" bg="transparent" color="gray" size="sm">
+                      <IconDots size={20} />
+                    </ActionIcon>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item
+                      leftSection={<IconPencil size={20} />}
+                      onClick={onEditClick}
+                    >
+                      Edit
+                    </Menu.Item>
+                    <Menu.Item
+                      leftSection={<IconTrash size={20} />}
+                      onClick={onDeleteClick}
+                      color="red"
+                    >
+                      Delete
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </Box>
             </Group>
-            {isLoadingStravaActivities && run.strava_link && (
-              <Skeleton height={20} width={100} />
+            {run.notes && (
+              <Text fz="sm" lh={1.2}>{run.notes}</Text>
             )}
-            {stravaActivity && (
-              <Group gap="xs">
-                <Group gap="2px" align="center">
-                  <IconBrandSpeedtest
-                    size={14}
-                    color="var(--mantine-color-gray-6)"
-                  />
-                  <Text fz="sm" c="dimmed">
-                    {formatPace(
-                      stravaActivity.distance,
-                      stravaActivity.moving_time
-                    )}
-                  </Text>
+            <Group justify="flex-start" gap="lg">
+              <Stack gap="0">
+                <Text fz="xs" fw={500} c="dimmed">Distance</Text>
+                <Text fz="md" fw={500}>{run.run_length} km</Text>
+              </Stack>
+              {run.pace && (
+                <Stack gap="0">
+                  <Text fz="xs" fw={500} c="dimmed">Pace</Text>
+                  <Text fz="md" fw={500}>{run.pace}</Text>
+                </Stack>
+              )}
+            </Group>
+            {run.strava_link && (
+              <Card shadow="xs" radius="md" bg='var(--mantine-primary-color-5)' c='var(--mantine-color-gray-3)'>
+                <Group justify="center" gap="lg" align="center">
+                  {stravaActivity?.distance && (
+                    <Stack gap="0">
+                      <Text fz="xs" fw={500} c="dimmed">Distance</Text>
+                      <Text fz="sm" fw={500}>{formatDistance(stravaActivity?.distance)} km</Text>
+                    </Stack>
+                  )}
+                  {stravaActivity?.moving_time && (
+                    <Stack gap="0">
+                      <Text fz="xs" fw={500} c="dimmed">Pace</Text>
+                      <Text fz="sm" fw={500}>{formatPace(stravaActivity?.distance, stravaActivity?.moving_time)}</Text>
+                    </Stack>
+                  )}
+                  {stravaActivity?.moving_time && (
+                    <Stack gap="0">
+                      <Text fz="xs" fw={500} c="dimmed">Time</Text>
+                      <Text fz="sm" fw={500}>{formatTime(stravaActivity?.elapsed_time)}</Text>
+                    </Stack>
+                  )}
+                  <Group ml="auto" align="center">
+                    <IconCheck size={20} color="var(--mantine-color-green-5)" />
+                  </Group>
                 </Group>
-                <Group gap="2px" align="center">
-                  <IconClock size={14} color="var(--mantine-color-gray-6)" />
-                  <Text fz="sm" c="dimmed">
-                    {formatTime(stravaActivity.moving_time)}
-                  </Text>
-                </Group>
-                <Group gap="2px" align="center">
-                  <IconRun size={14} color="var(--mantine-color-gray-6)" />
-                  <Text fz="sm" c="dimmed">
-                    {formatDistance(stravaActivity.distance)} km
-                  </Text>
-                </Group>
-              </Group>
+              </Card>
             )}
+
           </Stack>
-          <Group ml="auto">
-            <Menu>
-              <Menu.Target>
-                <ActionIcon variant="subtle" bg="transparent" color="gray">
-                  <IconDotsVertical size={20} />
-                </ActionIcon>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Item
-                  leftSection={<IconPencil size={20} />}
-                  onClick={onEditClick}
-                >
-                  Edit
-                </Menu.Item>
-                <Menu.Item
-                  leftSection={<IconTrash size={20} />}
-                  onClick={onDeleteClick}
-                  color="red"
-                >
-                  Delete
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-          </Group>
-        </Group>
+        </>
       </Card>
     </div>
   );

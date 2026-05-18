@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
 import { Run } from "~/types";
+
+dayjs.extend(isoWeek);
 
 interface GroupedRun {
   weekNumber: number;
@@ -22,11 +25,11 @@ export function useRunGrouping(runs: Run[] | undefined) {
 
     const grouped = new Map<number, typeof sortedRuns>();
     const firstRunDate = dayjs(sortedRuns[0].run_date);
-    const firstRunWeekStart = firstRunDate.startOf("week");
+    const firstRunWeekStart = firstRunDate.startOf("isoWeek");
 
     sortedRuns.forEach((run) => {
       const runDate = dayjs(run.run_date);
-      const weekStart = runDate.startOf("week");
+      const weekStart = runDate.startOf("isoWeek");
       const weekNumber = weekStart.diff(firstRunWeekStart, "week") + 1;
 
       if (!grouped.has(weekNumber)) {
