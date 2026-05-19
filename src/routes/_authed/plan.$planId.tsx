@@ -10,9 +10,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRunGrouping } from "~/hooks/useRunGrouping";
 import { useStravaActivities } from "~/hooks/useStravaActivities";
 import { useAutoLinkStrava } from "~/hooks/useAutoLinkStrava";
-import { Run } from "~/types";
+import { Run, StravaActivity } from "~/types";
 import { useGetRunPlan, useUpdateRunPlan } from "~/hooks/runPlans";
-import { updateRunPlan } from "~/serverFunctions";
 import { useQueryClient } from "@tanstack/react-query";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 
@@ -24,7 +23,7 @@ function RunsPage() {
   const planId = Route.useParams().planId;
   const runPlan = useGetRunPlan(planId);
   const updateRun = useUpdateRun(planId);
-  const updateRunPlan = useUpdateRunPlan(); 
+  const updateRunPlan = useUpdateRunPlan();
   const generateRunInsightsMutation = useGenerateRunInsights(planId);
   const deleteRun = useDeleteRun(planId);
   const queryClient = useQueryClient();
@@ -134,7 +133,6 @@ function RunsPage() {
             closeStravaModal();
             setStravaModalRunId(null);
           }}
-          runId={stravaModalRunId}
           run={runs.find((r) => r.id === stravaModalRunId)}
           onSelect={(activityId) => {
             const run = runs.find((r) => r.id === stravaModalRunId);
@@ -145,6 +143,27 @@ function RunsPage() {
                   run_length: run.run_length,
                   run_date: run.run_date,
                   strava_link: activityId ? activityId.toString() : null,
+                  ai_insights: !activityId ? null : run.ai_insights,
+                },
+              }, {
+                onSuccess: (updatedRun: Run) => {
+                  if (!updatedRun.ai_insights) {
+                    const stravaActivity = stravaActivities?.find((a) => a.id === activityId);
+                    if (stravaActivity) {
+                      generateRunInsightsMutation.mutate({
+                        data: {
+                          run: updatedRun,
+                          stravaActivity: stravaActivity,
+                        },
+                      },
+                      {
+                        onSuccess: () => {
+                          closeStravaModal();
+                          setStravaModalRunId(null);
+                        },
+                      });
+                    }
+                  }
                 },
               });
             }

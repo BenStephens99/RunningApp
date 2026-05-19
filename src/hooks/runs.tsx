@@ -8,8 +8,6 @@ import {
   updateRun,
 } from "~/serverFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
-import { useQueryClient } from "@tanstack/react-query";
-import { Run, RunPlan, StravaActivity } from "~/types";
 
 export function useDeleteRun(planId: number | string) {
   return useInvalidateMutation({
@@ -25,6 +23,10 @@ export function useUpdateRun(planId: number | string) {
   });
 }
 
+export type UpdateRunMutationResult = ReturnType<
+  typeof useUpdateRun
+>;
+
 export function useAddMultipleRuns() {
   return useInvalidateMutation({
     mutationFn: useServerFn(addMultipleRuns),
@@ -39,8 +41,6 @@ export function useDeleteAllRuns(planId: number | string) {
 }
 
 export function useGenerateRunInsights(planId: number | string) {
-  const queryClient = useQueryClient();
-
   return useInvalidateMutation({
     mutationFn: useServerFn(generateRunInsights),
     queryKey: QueryCacheKeys.runPlan(planId.toString()),

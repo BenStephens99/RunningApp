@@ -7,7 +7,6 @@ import {
   Group,
   Loader,
   Alert,
-  Table,
   Avatar,
   ActionIcon,
 } from "@mantine/core";
@@ -23,14 +22,10 @@ import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   IconAlertCircle,
-  IconClock,
-  IconRun,
   IconCheck,
-  IconBrandSpeedtest,
 } from "@tabler/icons-react";
 import {
   formatDistance,
-  formatTimeShort,
   formatPace,
   formatTime,
 } from "~/utils/formatting";
@@ -41,13 +36,11 @@ import { QueryCacheKeys } from "~/QueryCacheKeys";
 export function StravaActivityModal({
   opened,
   onClose,
-  runId,
   run,
   onSelect,
 }: {
   opened: boolean;
   onClose: () => void;
-  runId: string;
   run?: Run;
   onSelect: (activityId: number | null) => void;
 }) {
@@ -66,8 +59,6 @@ export function StravaActivityModal({
     queryFn: () => getToken(),
     enabled: opened,
   });
-
-
 
   useEffect(() => {
     if (opened) {
@@ -91,7 +82,6 @@ export function StravaActivityModal({
     enabled: opened && tokenData?.hasToken === true,
   });
 
-  // Group activities by date
   const groupedActivities = useMemo(() => {
     if (!activities || activities.length === 0) {
       return { today: [], thisWeek: [], older: [] };
@@ -237,101 +227,7 @@ export function StravaActivityModal({
                       {groupedActivities.today.map((activity) => {
                         const isSelected = selectedActivityId === activity.id;
                         return (
-                          <Card
-                            key={activity.id}
-                            shadow="xs"
-                            padding="sm"
-                            className={`${styles.activityCard} ${isSelected ? styles.activityCardSelected : ""
-                              }`}
-                            onClick={() => handleSelectActivity(activity.id)}
-                            withBorder={false}
-                          >
-                            <Stack gap="xs">
-                              <Group align="center" gap="xs">
-                                {isSelected && (
-                                  <IconCheck
-                                    size={18}
-                                    color="var(--mantine-color-green-6)"
-                                  />
-                                )}
-                                <Text fz="sm" fw="bold">
-                                  {dayjs(activity.start_date).format(
-                                    "MMM DD, YYYY HH:mm"
-                                  )}
-                                </Text>
-                                -
-                                <Text fz="xs" c="dimmed">
-                                  {activity.name || "Untitled Activity"}
-                                </Text>
-                                {isSelected && (
-                                  <Text fz="xs" c="dimmed" fs="italic">
-                                    (Click to unlink)
-                                  </Text>
-                                )}
-                              </Group>
-                              <Table>
-                                <Table.Tbody>
-                                  <Table.Tr>
-                                    <Table.Td>
-                                      <Group gap="xs" align="center">
-                                        <IconClock
-                                          size={18}
-                                          color="var(--mantine-color-gray-6)"
-                                        />
-                                        <Text fz="sm" c="dimmed">
-                                          Time
-                                        </Text>
-                                      </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                      <Text fz="sm" c="dimmed">
-                                        {formatTimeShort(activity.moving_time)}
-                                      </Text>
-                                    </Table.Td>
-                                  </Table.Tr>
-                                  <Table.Tr>
-                                    <Table.Td>
-                                      <Group gap="xs" align="center">
-                                        <IconRun
-                                          size={18}
-                                          color="var(--mantine-color-gray-6)"
-                                        />
-                                        <Text fz="sm" c="dimmed">
-                                          Distance
-                                        </Text>
-                                      </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                      <Text fz="sm" c="dimmed">
-                                        {formatDistance(activity.distance)} km
-                                      </Text>
-                                    </Table.Td>
-                                  </Table.Tr>
-                                  <Table.Tr>
-                                    <Table.Td>
-                                      <Group gap="xs" align="center">
-                                        <IconBrandSpeedtest
-                                          size={18}
-                                          color="var(--mantine-color-gray-6)"
-                                        />
-                                        <Text fz="sm" c="dimmed">
-                                          Pace
-                                        </Text>
-                                      </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                      <Text fz="sm" c="dimmed">
-                                        {formatPace(
-                                          activity.distance,
-                                          activity.moving_time
-                                        )}
-                                      </Text>
-                                    </Table.Td>
-                                  </Table.Tr>
-                                </Table.Tbody>
-                              </Table>
-                            </Stack>
-                          </Card>
+                          <ActivityCard key={activity.id} activity={activity} isSelected={isSelected} onSelect={handleSelectActivity} stravaAthlete={stravaAthlete} />
                         );
                       })}
                     </Stack>
@@ -348,7 +244,7 @@ export function StravaActivityModal({
                       {groupedActivities.thisWeek.map((activity) => {
                         const isSelected = selectedActivityId === activity.id;
                         return (
-                          <ActivityCard activity={activity} isSelected={isSelected} onSelect={handleSelectActivity} stravaAthlete={stravaAthlete} />
+                          <ActivityCard key={activity.id} activity={activity} isSelected={isSelected} onSelect={handleSelectActivity} stravaAthlete={stravaAthlete} />
                         );
                       })}
                     </Stack>
@@ -365,7 +261,7 @@ export function StravaActivityModal({
                       {groupedActivities.older.map((activity) => {
                         const isSelected = selectedActivityId === activity.id;
                         return (
-                          <ActivityCard activity={activity} isSelected={isSelected} onSelect={handleSelectActivity} stravaAthlete={stravaAthlete} />
+                          <ActivityCard key={activity.id} activity={activity} isSelected={isSelected} onSelect={handleSelectActivity} stravaAthlete={stravaAthlete} />
                         );
                       })}
                     </Stack>
@@ -391,11 +287,13 @@ const ActivityCard = ({ activity, isSelected, onSelect, stravaAthlete }: { activ
     <Card
       key={activity.id}
       shadow="xs"
-      padding="sm"
+      padding="md"
+      pb="lg"
       className={`${styles.activityCard} ${isSelected ? styles.activityCardSelected : ""
         }`}
       onClick={() => onSelect(activity.id)}
       withBorder
+      radius="md"
     >
       <Stack gap="sm">
         <Group gap="sm">

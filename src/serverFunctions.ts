@@ -223,12 +223,17 @@ export const updateRun = createServerFn({ method: "POST" })
   )
   .handler(async ({ data: run }) => {
     const supabase = getSupabaseServerClient();
+    const { id, ...updates } = run;
+    if (!id) throw new Error("Run id is required");
+
     const { data: row, error } = await supabase
       .from("runs")
-      .update(run)
-      .eq("id", run.id);
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
     if (error) throw error;
-    return row as unknown as Run;
+    return row as Run;
   });
 
 export const addMultipleRuns = createServerFn({ method: "POST" })

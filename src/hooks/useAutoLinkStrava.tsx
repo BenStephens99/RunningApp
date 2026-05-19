@@ -1,38 +1,13 @@
 import { useEffect, useRef } from "react";
 import dayjs from "dayjs";
 import { Run, StravaActivity } from "~/types";
-
-interface UpdateRunMutation {
-  mutate: (variables: {
-    data: {
-      id: string;
-      run_length: number;
-      run_date: string;
-      strava_link: string | null;
-    };
-  }, options?: {
-    onSuccess?: () => void;
-    onError?: () => void;
-  }) => void;
-}
-
-export interface GenerateRunInsightsMutation {
-  mutate: (variables: {
-    data: {
-      run: Partial<Run>;
-      stravaActivity: StravaActivity;
-    };
-  }, options?: {
-    onSuccess?: () => void;
-    onError?: () => void;
-  }) => void;
-}
+import { GenerateRunInsightsMutationResult, UpdateRunMutationResult } from "~/hooks/runs";
 
 export function useAutoLinkStrava(
   stravaActivities: StravaActivity[] | undefined,
   runs: Run[] | undefined,
-  updateRun: UpdateRunMutation,
-  generateRunInsights: GenerateRunInsightsMutation
+  updateRun: UpdateRunMutationResult,
+  generateRunInsights: GenerateRunInsightsMutationResult
 ) {
   const linkingRunIdsRef = useRef(new Set<string>());
   const generatingInsightsRunIdsRef = useRef(new Set<string>());
@@ -64,7 +39,9 @@ export function useAutoLinkStrava(
             },
           },
           {
-            onSuccess: () => {
+            onSuccess: (updatedRun) => {
+              if (!updatedRun) return;
+
               if (run.ai_insights || generatingInsightsRunIdsRef.current.has(run.id)) {
                 return;
               }
@@ -73,10 +50,7 @@ export function useAutoLinkStrava(
               generateRunInsights.mutate(
                 {
                   data: {
-                    run: {
-                      ...run,
-                      strava_link: matchingActivity.id.toString(),
-                    },
+                    run: updatedRun,
                     stravaActivity: matchingActivity,
                   },
                 },
