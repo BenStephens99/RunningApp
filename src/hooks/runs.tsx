@@ -46,3 +46,7 @@ export function useGenerateRunInsights(planId: number | string) {
     queryKey: QueryCacheKeys.runPlan(planId.toString()),
   });
 }
+
+export type GenerateRunInsightsMutationResult = ReturnType<
+  typeof useGenerateRunInsights
+>;

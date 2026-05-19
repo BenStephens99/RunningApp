@@ -16,7 +16,7 @@ interface UpdateRunMutation {
   }) => void;
 }
 
-interface GenerateRunInsightsMutation {
+export interface GenerateRunInsightsMutation {
   mutate: (variables: {
     data: {
       run: Partial<Run>;

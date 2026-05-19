@@ -1,8 +1,10 @@
 import { Stack, Title } from "@mantine/core";
 import { Run, StravaActivity } from "~/types";
 import { RunCard } from "./RunCard";
+import type { GenerateRunInsightsMutationResult } from "~/hooks/runs";
 
 interface WeekGroupProps {
+  generateRunInsights: GenerateRunInsightsMutationResult;
   weekNumber: number;
   runs: Run[];
   nextRunId: string | null;
@@ -12,9 +14,10 @@ interface WeekGroupProps {
   onEditClick: (runId: string) => void;
   onDeleteClick: (runId: string) => void;
   setCardRef: (runId: string, element: HTMLDivElement | null) => void;
-}
+};
 
 export function WeekGroup({
+  generateRunInsights,
   weekNumber,
   runs,
   nextRunId,
@@ -44,6 +47,7 @@ export function WeekGroup({
 
         return (
           <RunCard
+            generateRunInsights={generateRunInsights}
             key={run.id}
             run={run}
             isNextRun={isNextRun}

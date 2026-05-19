@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
 import { Run } from "~/types";
+import { last } from "lodash";
 
 dayjs.extend(isoWeek);
 
@@ -22,6 +23,7 @@ export function useRunGrouping(runs: Run[] | undefined) {
 
     const nextRun = sortedRuns.find((run) => !run.strava_link);
     const nextRunId = nextRun?.id || null;
+    const lastCompletedRunId = last(sortedRuns.filter((run) => run.strava_link))?.id || null;
 
     const grouped = new Map<number, typeof sortedRuns>();
     const firstRunDate = dayjs(sortedRuns[0].run_date);
@@ -45,7 +47,7 @@ export function useRunGrouping(runs: Run[] | undefined) {
       })
     );
 
-    return { groupedRuns: groupedArray, nextRunId };
+    return { groupedRuns: groupedArray, nextRunId, lastCompletedRunId };
   }, [runs]);
 }
 

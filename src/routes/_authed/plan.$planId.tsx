@@ -25,7 +25,7 @@ function RunsPage() {
   const runPlan = useGetRunPlan(planId);
   const updateRun = useUpdateRun(planId);
   const updateRunPlan = useUpdateRunPlan(); 
-  const generateRunInsights = useGenerateRunInsights(planId);
+  const generateRunInsightsMutation = useGenerateRunInsights(planId);
   const deleteRun = useDeleteRun(planId);
   const queryClient = useQueryClient();
 
@@ -67,7 +67,7 @@ function RunsPage() {
   const { stravaActivities, activitiesMap, isLoadingStravaActivities } =
     useStravaActivities();
 
-  const { groupedRuns, nextRunId } = useRunGrouping(runs);
+  const { groupedRuns, nextRunId, lastCompletedRunId } = useRunGrouping(runs);
 
   const cardRefsMap = useRef(new Map<string, HTMLDivElement>());
 
@@ -80,8 +80,8 @@ function RunsPage() {
   };
 
   useEffect(() => {
-    if (nextRunId && runPlan.isSuccess) {
-      const element = cardRefsMap.current.get(nextRunId);
+    if (lastCompletedRunId && runPlan.isSuccess) {
+      const element = cardRefsMap.current.get(lastCompletedRunId);
       if (element) {
         const timeoutId = setTimeout(() => {
           requestAnimationFrame(() => {
@@ -95,9 +95,9 @@ function RunsPage() {
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [runPlan.data, nextRunId]);
+  }, [runPlan.data, lastCompletedRunId]);
 
-  useAutoLinkStrava(stravaActivities, runs, updateRun, generateRunInsights);
+  useAutoLinkStrava(stravaActivities, runs, updateRun, generateRunInsightsMutation);
 
   const handleStravaClick = (run: Run) => {
     setStravaModalRunId(run.id);
@@ -108,6 +108,7 @@ function RunsPage() {
     <Stack>
       {groupedRuns.map(({ weekNumber, runs: weekRuns }) => (
         <WeekGroup
+          generateRunInsights={generateRunInsightsMutation}
           key={weekNumber}
           weekNumber={weekNumber}
           runs={weekRuns}

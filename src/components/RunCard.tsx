@@ -4,31 +4,24 @@ import {
   Stack,
   Text,
   ActionIcon,
-  Skeleton,
   Menu,
   Box,
-  Table,
-  Divider,
   Loader,
 } from "@mantine/core";
 import {
   IconPencil,
-  IconRun,
   IconTrash,
   IconBrandStrava,
-  IconClock,
-  IconBrandSpeedtest,
-  IconDotsVertical,
+ 
   IconDots,
-  IconCheck,
-  IconSparkles,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
-import { useGenerateRunInsights } from "~/hooks/runs";
 import { Run, StravaActivity } from "~/types";
 import { formatDistance, formatTime, formatPace } from "~/utils/formatting";
+import type { GenerateRunInsightsMutationResult } from "~/hooks/runs";
 
 interface RunCardProps {
+  generateRunInsights: GenerateRunInsightsMutationResult;
   run: Run;
   isNextRun: boolean;
   stravaActivity: StravaActivity | null;
@@ -40,6 +33,7 @@ interface RunCardProps {
 }
 
 export function RunCard({
+  generateRunInsights,
   run,
   isNextRun,
   stravaActivity,
@@ -48,10 +42,8 @@ export function RunCard({
   onDeleteClick,
   setCardRef,
 }: RunCardProps) {
-  const generateRunInsights = useGenerateRunInsights(run.plan_id)
-
   return (
-    <div ref={setCardRef} style={{ scrollMargin: "175px" }}>
+    <div ref={setCardRef} style={{ scrollMargin: "75px" }}>
       <Card
         shadow="xs"
         radius="md"
