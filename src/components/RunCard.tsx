@@ -42,6 +42,10 @@ export function RunCard({
   onDeleteClick,
   setCardRef,
 }: RunCardProps) {
+  const isGeneratingInsights =
+    generateRunInsights.isPending &&
+    generateRunInsights.variables?.data?.run?.id === run.id;
+
   return (
     <div ref={setCardRef} style={{ scrollMargin: "75px" }}>
       <Card
@@ -133,9 +137,9 @@ export function RunCard({
                     </Stack>
                   )}
                 </Group>
-                {(run.ai_insights || generateRunInsights.isPending) && (
+                {(run.ai_insights || isGeneratingInsights) && (
                   <>
-                    {generateRunInsights.isPending ? (
+                    {isGeneratingInsights ? (
                       <>
                         <Box h="75px">
                           <Group h="100%" align="center" justify="center">
