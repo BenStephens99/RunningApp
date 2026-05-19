@@ -185,11 +185,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <Notifications />
           <QueryClientProvider client={queryClient}>
             <AppShell
-              bg="var(--mantine-primary-color-7)"
-              header={{ height: 60 }}
-              footer={{ height: 80 }}
+              bg="var(--mantine-primary-color-9)"
+              header={{ height: 58 }}
+              footer={{ height: 79 }}
             >
-              <AppShell.Header bg="var(--mantine-primary-color-8)" withBorder={false}>
+              <AppShell.Header bg="var(--mantine-primary-color-6)">
                 <Header />
               </AppShell.Header>
               <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
@@ -197,7 +197,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                   {children}
                 </Box>
               </AppShell.Main>
-              <AppShell.Footer bg="var(--mantine-primary-color-8)" withBorder={false}>
+              <AppShell.Footer bg="var(--mantine-primary-color-6)">
                 <React.Suspense fallback={<Skeleton height={60} />}>
                   <Footer />
                 </React.Suspense>

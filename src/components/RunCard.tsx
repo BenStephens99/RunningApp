@@ -7,12 +7,12 @@ import {
   Menu,
   Box,
   Loader,
+  Skeleton,
 } from "@mantine/core";
 import {
   IconPencil,
   IconTrash,
   IconBrandStrava,
- 
   IconDots,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
@@ -22,10 +22,10 @@ import type { GenerateRunInsightsMutationResult } from "~/hooks/runs";
 
 interface RunCardProps {
   generateRunInsights: GenerateRunInsightsMutationResult;
+  isLoadingStravaActivities: boolean;
   run: Run;
   isNextRun: boolean;
   stravaActivity: StravaActivity | null;
-  isLoadingStravaActivities: boolean;
   onStravaClick: () => void;
   onEditClick: () => void;
   onDeleteClick: () => void;
@@ -34,6 +34,7 @@ interface RunCardProps {
 
 export function RunCard({
   generateRunInsights,
+  isLoadingStravaActivities,
   run,
   isNextRun,
   stravaActivity,
@@ -51,7 +52,7 @@ export function RunCard({
       <Card
         shadow="xs"
         radius="md"
-        bg='var(--mantine-primary-color-6)'
+        bg='var(--mantine-primary-color-7)'
         withBorder
         c={'var(--mantine-color-gray-3)'}
         style={{
@@ -68,7 +69,7 @@ export function RunCard({
                 variant={run.strava_link ? "filled" : "light"}
                 size="lg"
                 color={run.strava_link ? "green" : "orange.5"}
-                bg={run.strava_link ? "green.6" : 'var(--mantine-primary-color-4)'}
+                bg={run.strava_link ? "green.8" : 'var(--mantine-primary-color-4)'}
                 radius="lg"
                 onClick={onStravaClick}
               >
@@ -116,25 +117,31 @@ export function RunCard({
               )}
             </Group>
             {run.strava_link && (
-              <Card shadow="xs" radius="md" bg='var(--mantine-primary-color-5)' c='var(--mantine-color-gray-3)'>
-                <Group justify="flex-start" gap="lg" align="center">
-                  {stravaActivity?.distance && (
-                    <Stack gap="0">
-                      <Text fz="xs" fw={500} c="dimmed">Distance</Text>
-                      <Text fz="sm" fw={500}>{formatDistance(stravaActivity?.distance)} km</Text>
-                    </Stack>
-                  )}
-                  {stravaActivity?.moving_time && (
-                    <Stack gap="0">
-                      <Text fz="xs" fw={500} c="dimmed">Pace</Text>
-                      <Text fz="sm" fw={500}>{formatPace(stravaActivity?.distance, stravaActivity?.moving_time)}</Text>
-                    </Stack>
-                  )}
-                  {stravaActivity?.moving_time && (
-                    <Stack gap="0">
-                      <Text fz="xs" fw={500} c="dimmed">Time</Text>
-                      <Text fz="sm" fw={500}>{formatTime(stravaActivity?.elapsed_time)}</Text>
-                    </Stack>
+              <Card shadow="xs" radius="md" bg='var(--mantine-primary-color-6)' c='var(--mantine-color-gray-3)' withBorder>
+                <Group justify="flex-start" gap="lg" align="center" h="40px">
+                  {isLoadingStravaActivities ? (
+                    <Skeleton height="100%" width="100%" />
+                  ) : (
+                    <>
+                      {stravaActivity?.distance && (
+                        <Stack gap="0">
+                          <Text fz="xs" fw={500} c="dimmed">Distance</Text>
+                          <Text fz="sm" fw={500}>{formatDistance(stravaActivity?.distance)} km</Text>
+                        </Stack>
+                      )}
+                      {stravaActivity?.moving_time && (
+                        <Stack gap="0">
+                          <Text fz="xs" fw={500} c="dimmed">Pace</Text>
+                          <Text fz="sm" fw={500}>{formatPace(stravaActivity?.distance, stravaActivity?.moving_time)}</Text>
+                        </Stack>
+                      )}
+                      {stravaActivity?.moving_time && (
+                        <Stack gap="0">
+                          <Text fz="xs" fw={500} c="dimmed">Time</Text>
+                          <Text fz="sm" fw={500}>{formatTime(stravaActivity?.elapsed_time)}</Text>
+                        </Stack>
+                      )}
+                    </>
                   )}
                 </Group>
                 {(run.ai_insights || isGeneratingInsights) && (
@@ -154,7 +161,6 @@ export function RunCard({
                 )}
               </Card>
             )}
-
           </Stack>
         </>
       </Card>
