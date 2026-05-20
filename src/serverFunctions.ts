@@ -19,7 +19,7 @@ enum GEMINI_MODELS {
   GEMINI_2_5_FLASH = "gemini-2.5-flash",
 }
 
-const CURRENT_MODEL = GEMINI_MODELS.GEMINI_3_5_FLASH;
+export const CURRENT_MODEL = GEMINI_MODELS.GEMINI_3_5_FLASH;
 
 export const getSession = createServerFn({ method: "GET" })
   .inputValidator((d?: { accessToken?: string, refreshToken?: string }) => d)

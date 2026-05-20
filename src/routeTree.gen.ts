@@ -18,6 +18,7 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedPlanRouteImport } from './routes/_authed/plan'
 import { Route as AuthedPlanIndexRouteImport } from './routes/_authed/plan.index'
+import { Route as AuthedChatsIndexRouteImport } from './routes/_authed/chats.index'
 import { Route as AuthedPlanPlanIdRouteImport } from './routes/_authed/plan.$planId'
 
 const StravaCallbackRoute = StravaCallbackRouteImport.update({
@@ -64,6 +65,11 @@ const AuthedPlanIndexRoute = AuthedPlanIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedPlanRoute,
 } as any)
+const AuthedChatsIndexRoute = AuthedChatsIndexRouteImport.update({
+  id: '/chats/',
+  path: '/chats/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedPlanPlanIdRoute = AuthedPlanPlanIdRouteImport.update({
   id: '/$planId',
   path: '/$planId',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/strava-callback': typeof StravaCallbackRoute
   '/plan': typeof AuthedPlanRouteWithChildren
   '/plan/$planId': typeof AuthedPlanPlanIdRoute
+  '/chats/': typeof AuthedChatsIndexRoute
   '/plan/': typeof AuthedPlanIndexRoute
 }
 export interface FileRoutesByTo {
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/strava-callback': typeof StravaCallbackRoute
   '/': typeof AuthedIndexRoute
   '/plan/$planId': typeof AuthedPlanPlanIdRoute
+  '/chats': typeof AuthedChatsIndexRoute
   '/plan': typeof AuthedPlanIndexRoute
 }
 export interface FileRoutesById {
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/_authed/plan': typeof AuthedPlanRouteWithChildren
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/plan/$planId': typeof AuthedPlanPlanIdRoute
+  '/_authed/chats/': typeof AuthedChatsIndexRoute
   '/_authed/plan/': typeof AuthedPlanIndexRoute
 }
 export interface FileRouteTypes {
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/strava-callback'
     | '/plan'
     | '/plan/$planId'
+    | '/chats/'
     | '/plan/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/strava-callback'
     | '/'
     | '/plan/$planId'
+    | '/chats'
     | '/plan'
   id:
     | '__root__'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/_authed/plan'
     | '/_authed/'
     | '/_authed/plan/$planId'
+    | '/_authed/chats/'
     | '/_authed/plan/'
   fileRoutesById: FileRoutesById
 }
@@ -214,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPlanIndexRouteImport
       parentRoute: typeof AuthedPlanRoute
     }
+    '/_authed/chats/': {
+      id: '/_authed/chats/'
+      path: '/chats'
+      fullPath: '/chats/'
+      preLoaderRoute: typeof AuthedChatsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/plan/$planId': {
       id: '/_authed/plan/$planId'
       path: '/$planId'
@@ -241,11 +260,13 @@ const AuthedPlanRouteWithChildren = AuthedPlanRoute._addFileChildren(
 interface AuthedRouteChildren {
   AuthedPlanRoute: typeof AuthedPlanRouteWithChildren
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedChatsIndexRoute: typeof AuthedChatsIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedPlanRoute: AuthedPlanRouteWithChildren,
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedChatsIndexRoute: AuthedChatsIndexRoute,
 }
 
 const AuthedRouteWithChildren =
