@@ -124,16 +124,13 @@ function ChatDetailPage() {
                 key={message.id}
                 radius="lg"
                 p="sm"
-                maw="85%"
+                maw={message.role === "user" ? "85%" : "100%"}
                 ml={message.role === "user" ? "auto" : 0}
                 bg={
                   message.role === "user"
-                    ? "var(--mantine-color-blue-9)"
-                    : "var(--mantine-primary-color-7)"
+                    ? "var(--mantine-color-indigo-9)"
+                    : "transparent"
                 }
-                style={{
-                  border: "1px solid var(--mantine-color-dark-4)",
-                }}
               >
                 <ReactMarkdown
                   components={{
