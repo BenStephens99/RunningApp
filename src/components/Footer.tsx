@@ -16,16 +16,6 @@ export function Footer() {
     <>
       <CreatePlanModal opened={createPlanOpened} onClose={closeCreatePlan} />
       <Group justify="center" align="center" h="100%" gap="xl">
-        <ActionIcon
-          component={Link}
-          to="/chats"
-          size="xl"
-          color="var(--mantine-primary-color-4)"
-          radius="xl"
-          aria-label="Chats"
-        >
-          <IconMessageCircle size={20} />
-        </ActionIcon>
         {isHome ? (
           <ActionIcon
             size="xl"
@@ -48,6 +38,16 @@ export function Footer() {
             <IconList size={20} />
           </ActionIcon>
         )}
+        <ActionIcon
+          component={Link}
+          to="/chats"
+          size="xl"
+          color="var(--mantine-primary-color-4)"
+          radius="xl"
+          aria-label="Chats"
+        >
+          <IconMessageCircle size={20} />
+        </ActionIcon>
       </Group>
     </>
   );

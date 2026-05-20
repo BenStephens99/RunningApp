@@ -38,18 +38,18 @@ function Chats() {
         size="md"
         variant="light"
       >
-        Create chat
+        New chat
       </Button>
 
       <Stack gap="xs">
         {chats.data?.length ? (
           chats.data.map((chat, index) => (
             <Card key={chat.id} withBorder radius="md" padding="md">
-              <Group justify="space-between" align="flex-start" wrap="nowrap">
+              <Group justify="space-between" align="center" wrap="nowrap">
                 <Link
                   to="/chats/$chatId"
                   params={{ chatId: chat.id }}
-                  style={{ textDecoration: "none", flex: 1 }}
+                  style={{ textDecoration: "none", color: "var(--mantine-color-gray-3)", flex: 1 }}
                 >
                   <Stack gap={2}>
                     <Text fw={600}>{chat.name || `Chat ${chats.data.length - index}`}</Text>
