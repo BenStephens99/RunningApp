@@ -29,7 +29,7 @@ function Chats() {
 
   return (
     <Stack gap="md">
-      <Title order={3}>Chats</Title>
+      <Title order={3}>Running coach</Title>
       <Button
         onClick={() => void handleCreateChat()}
         loading={createChat.isPending}

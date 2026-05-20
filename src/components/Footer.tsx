@@ -4,6 +4,9 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { CreatePlanModal } from "./CreatePlanModal";
 import { useDisclosure } from "@mantine/hooks";
 
+const ICON_SIZE = "50px";
+const INNER_ICON_SIZE = "22px";
+
 export function Footer() {
   const [createPlanOpened, { open: openCreatePlan, close: closeCreatePlan }] =
     useDisclosure(false);
@@ -12,41 +15,43 @@ export function Footer() {
     select: (state) => state.location.pathname === "/plan",
   });
 
+
+
   return (
     <>
       <CreatePlanModal opened={createPlanOpened} onClose={closeCreatePlan} />
       <Group justify="center" align="center" h="100%" gap="xl">
         {isHome ? (
           <ActionIcon
-            size="xl"
+            size={ICON_SIZE}
             color="var(--mantine-primary-color-4)"
             radius="xl"
             onClick={openCreatePlan}
             aria-label="Create plan"
           >
-            <IconPlus size={20} />
+            <IconPlus size={INNER_ICON_SIZE} />
           </ActionIcon>
         ) : (
           <ActionIcon
             component={Link}
             to="/plan"
-            size="xl"
+            size={ICON_SIZE}
             color="var(--mantine-primary-color-4)"
             radius="xl"
             aria-label="Back to plans"
           >
-            <IconList size={20} />
+            <IconList size={INNER_ICON_SIZE} />
           </ActionIcon>
         )}
         <ActionIcon
           component={Link}
           to="/chats"
-          size="xl"
+          size={ICON_SIZE}
           color="var(--mantine-primary-color-4)"
           radius="xl"
           aria-label="Chats"
         >
-          <IconMessageCircle size={20} />
+          <IconMessageCircle size={INNER_ICON_SIZE} />
         </ActionIcon>
       </Group>
     </>
