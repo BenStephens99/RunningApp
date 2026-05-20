@@ -14,11 +14,12 @@ import {
 } from "./types";
 
 enum GEMINI_MODELS {
+  GEMINI_3_5_FLASH = "gemini-3.5-flash",
   GEMINI_3_1_FLASH_LITE = "gemini-3.1-flash-lite",
   GEMINI_2_5_FLASH = "gemini-2.5-flash",
 }
 
-const CURRENT_MODEL = GEMINI_MODELS.GEMINI_3_1_FLASH_LITE;
+const CURRENT_MODEL = GEMINI_MODELS.GEMINI_3_5_FLASH;
 
 export const getSession = createServerFn({ method: "GET" })
   .inputValidator((d?: { accessToken?: string, refreshToken?: string }) => d)
