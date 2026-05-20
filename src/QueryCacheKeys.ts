@@ -6,4 +6,6 @@ export const QueryCacheKeys = {
   unconfirmedPlans: () => ["unconfirmed-plans"],
   runPlans: () => ["run-plans"],
   runPlan: (id: string) => ["run-plan", id],
+  chats: () => ["chats"],
+  chatMessages: (chatId: string) => ["chat-messages", chatId],
 };

@@ -1,5 +1,5 @@
 import { ActionIcon, Group } from "@mantine/core";
-import { IconList, IconPlus } from "@tabler/icons-react";
+import { IconList, IconMessageCircle, IconPlus } from "@tabler/icons-react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { CreatePlanModal } from "./CreatePlanModal";
 import { useDisclosure } from "@mantine/hooks";
@@ -15,7 +15,17 @@ export function Footer() {
   return (
     <>
       <CreatePlanModal opened={createPlanOpened} onClose={closeCreatePlan} />
-      <Group justify="center" align="center" h="100%">
+      <Group justify="center" align="center" h="100%" gap="xl">
+        <ActionIcon
+          component={Link}
+          to="/chats"
+          size="xl"
+          color="var(--mantine-primary-color-4)"
+          radius="xl"
+          aria-label="Chats"
+        >
+          <IconMessageCircle size={20} />
+        </ActionIcon>
         {isHome ? (
           <ActionIcon
             size="xl"

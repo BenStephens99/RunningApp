@@ -17,9 +17,11 @@ import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedPlanRouteImport } from './routes/_authed/plan'
+import { Route as AuthedChatsRouteImport } from './routes/_authed/chats'
 import { Route as AuthedPlanIndexRouteImport } from './routes/_authed/plan.index'
 import { Route as AuthedChatsIndexRouteImport } from './routes/_authed/chats.index'
 import { Route as AuthedPlanPlanIdRouteImport } from './routes/_authed/plan.$planId'
+import { Route as AuthedChatsChatIdRouteImport } from './routes/_authed/chats.$chatId'
 
 const StravaCallbackRoute = StravaCallbackRouteImport.update({
   id: '/strava-callback',
@@ -60,20 +62,30 @@ const AuthedPlanRoute = AuthedPlanRouteImport.update({
   path: '/plan',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedChatsRoute = AuthedChatsRouteImport.update({
+  id: '/chats',
+  path: '/chats',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedPlanIndexRoute = AuthedPlanIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedPlanRoute,
 } as any)
 const AuthedChatsIndexRoute = AuthedChatsIndexRouteImport.update({
-  id: '/chats/',
-  path: '/chats/',
-  getParentRoute: () => AuthedRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedChatsRoute,
 } as any)
 const AuthedPlanPlanIdRoute = AuthedPlanPlanIdRouteImport.update({
   id: '/$planId',
   path: '/$planId',
   getParentRoute: () => AuthedPlanRoute,
+} as any)
+const AuthedChatsChatIdRoute = AuthedChatsChatIdRouteImport.update({
+  id: '/$chatId',
+  path: '/$chatId',
+  getParentRoute: () => AuthedChatsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -83,7 +95,9 @@ export interface FileRoutesByFullPath {
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/strava-callback': typeof StravaCallbackRoute
+  '/chats': typeof AuthedChatsRouteWithChildren
   '/plan': typeof AuthedPlanRouteWithChildren
+  '/chats/$chatId': typeof AuthedChatsChatIdRoute
   '/plan/$planId': typeof AuthedPlanPlanIdRoute
   '/chats/': typeof AuthedChatsIndexRoute
   '/plan/': typeof AuthedPlanIndexRoute
@@ -95,6 +109,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/strava-callback': typeof StravaCallbackRoute
   '/': typeof AuthedIndexRoute
+  '/chats/$chatId': typeof AuthedChatsChatIdRoute
   '/plan/$planId': typeof AuthedPlanPlanIdRoute
   '/chats': typeof AuthedChatsIndexRoute
   '/plan': typeof AuthedPlanIndexRoute
@@ -107,8 +122,10 @@ export interface FileRoutesById {
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/strava-callback': typeof StravaCallbackRoute
+  '/_authed/chats': typeof AuthedChatsRouteWithChildren
   '/_authed/plan': typeof AuthedPlanRouteWithChildren
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/chats/$chatId': typeof AuthedChatsChatIdRoute
   '/_authed/plan/$planId': typeof AuthedPlanPlanIdRoute
   '/_authed/chats/': typeof AuthedChatsIndexRoute
   '/_authed/plan/': typeof AuthedPlanIndexRoute
@@ -122,7 +139,9 @@ export interface FileRouteTypes {
     | '/logout'
     | '/signup'
     | '/strava-callback'
+    | '/chats'
     | '/plan'
+    | '/chats/$chatId'
     | '/plan/$planId'
     | '/chats/'
     | '/plan/'
@@ -134,6 +153,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/strava-callback'
     | '/'
+    | '/chats/$chatId'
     | '/plan/$planId'
     | '/chats'
     | '/plan'
@@ -145,8 +165,10 @@ export interface FileRouteTypes {
     | '/logout'
     | '/signup'
     | '/strava-callback'
+    | '/_authed/chats'
     | '/_authed/plan'
     | '/_authed/'
+    | '/_authed/chats/$chatId'
     | '/_authed/plan/$planId'
     | '/_authed/chats/'
     | '/_authed/plan/'
@@ -219,6 +241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPlanRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/chats': {
+      id: '/_authed/chats'
+      path: '/chats'
+      fullPath: '/chats'
+      preLoaderRoute: typeof AuthedChatsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/plan/': {
       id: '/_authed/plan/'
       path: '/'
@@ -228,10 +257,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authed/chats/': {
       id: '/_authed/chats/'
-      path: '/chats'
+      path: '/'
       fullPath: '/chats/'
       preLoaderRoute: typeof AuthedChatsIndexRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedChatsRoute
     }
     '/_authed/plan/$planId': {
       id: '/_authed/plan/$planId'
@@ -240,8 +269,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPlanPlanIdRouteImport
       parentRoute: typeof AuthedPlanRoute
     }
+    '/_authed/chats/$chatId': {
+      id: '/_authed/chats/$chatId'
+      path: '/$chatId'
+      fullPath: '/chats/$chatId'
+      preLoaderRoute: typeof AuthedChatsChatIdRouteImport
+      parentRoute: typeof AuthedChatsRoute
+    }
   }
 }
+
+interface AuthedChatsRouteChildren {
+  AuthedChatsChatIdRoute: typeof AuthedChatsChatIdRoute
+  AuthedChatsIndexRoute: typeof AuthedChatsIndexRoute
+}
+
+const AuthedChatsRouteChildren: AuthedChatsRouteChildren = {
+  AuthedChatsChatIdRoute: AuthedChatsChatIdRoute,
+  AuthedChatsIndexRoute: AuthedChatsIndexRoute,
+}
+
+const AuthedChatsRouteWithChildren = AuthedChatsRoute._addFileChildren(
+  AuthedChatsRouteChildren,
+)
 
 interface AuthedPlanRouteChildren {
   AuthedPlanPlanIdRoute: typeof AuthedPlanPlanIdRoute
@@ -258,15 +308,15 @@ const AuthedPlanRouteWithChildren = AuthedPlanRoute._addFileChildren(
 )
 
 interface AuthedRouteChildren {
+  AuthedChatsRoute: typeof AuthedChatsRouteWithChildren
   AuthedPlanRoute: typeof AuthedPlanRouteWithChildren
   AuthedIndexRoute: typeof AuthedIndexRoute
-  AuthedChatsIndexRoute: typeof AuthedChatsIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedChatsRoute: AuthedChatsRouteWithChildren,
   AuthedPlanRoute: AuthedPlanRouteWithChildren,
   AuthedIndexRoute: AuthedIndexRoute,
-  AuthedChatsIndexRoute: AuthedChatsIndexRoute,
 }
 
 const AuthedRouteWithChildren =

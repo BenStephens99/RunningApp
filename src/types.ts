@@ -86,3 +86,24 @@ export type MessageHistory = {
   user_id: string;
   created_at: string;
 };
+
+export type Chat = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  status: string;
+  name: string | null;
+};
+
+export type ChatMessage = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  chat_id: string;
+  message: string;
+  status: string;
+  model: string | null;
+  role: "user" | "generated";
+};
