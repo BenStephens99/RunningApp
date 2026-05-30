@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { handleStravaCallback } from "~/serverFunctions";
+import { handleStravaCallback } from "~/stravaServerFunctions";
 import { Stack, Text, Loader, Alert } from "@mantine/core";
 import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 
@@ -90,4 +90,3 @@ function StravaCallback() {
     </Stack>
   );
 }
-

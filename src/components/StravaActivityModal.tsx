@@ -16,7 +16,7 @@ import {
   getStravaActivities,
   getStravaAccessToken,
   getStravaAthlete,
-} from "~/serverFunctions";
+} from "~/stravaServerFunctions";
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";

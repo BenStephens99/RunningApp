@@ -21,7 +21,7 @@ import {
   getStravaAuthUrl,
   disconnectStrava,
   getStravaAthlete,
-} from "~/serverFunctions";
+} from "~/stravaServerFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 
 export function Header() {

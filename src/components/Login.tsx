@@ -12,7 +12,7 @@ import { useLogin } from "~/hooks/auth";
 import { useEffect, useState } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { GoogleSignIn } from "./GoogleSignIn";
-import { getSession } from "~/serverFunctions";
+import { getSession } from "~/authServerFunctions";
 
 export function Login() {
   const login = useLogin();

@@ -12,7 +12,7 @@ import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import appCss from "../styles/app.css?url";
 import { seo } from "../utils/seo";
-import { getUser, getSession } from "../serverFunctions";
+import { getUser, getSession } from "../authServerFunctions";
 import { Notifications } from "@mantine/notifications";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";

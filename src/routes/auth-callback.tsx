@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { handleGoogleCallback } from "~/serverFunctions";
+import { handleGoogleCallback } from "~/authServerFunctions";
 import { Stack, Text, Loader, Alert, Button, Skeleton } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { getSupabaseBrowserClient } from "~/utils/supabase";

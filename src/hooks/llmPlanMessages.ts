@@ -5,7 +5,7 @@ import {
   markPlanAsDiscarded,
   getUnconfirmedPlans,
   markPlanAsCompleted,
-} from "~/serverFunctions";
+} from "~/llmPlanMessageServerFunctions";
 import { useServerFn } from "@tanstack/react-start";
 
 export function useGetUnconfirmedPlans() {

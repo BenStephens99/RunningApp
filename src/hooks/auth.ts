@@ -1,5 +1,5 @@
 import { useServerFn } from "@tanstack/react-start";
-import { getUser, login, signup, signInWithGoogle } from "~/serverFunctions";
+import { getUser, login, signup, signInWithGoogle } from "~/authServerFunctions";
 import { useRouter } from "@tanstack/react-router";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { useInvalidateMutation } from "./useInvalidateMutation";

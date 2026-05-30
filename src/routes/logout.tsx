@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { logout } from "../serverFunctions";
+import { logout } from "../authServerFunctions";
 import { queryClient } from "../utils/queryClient";
 
 export const Route = createFileRoute("/logout")({

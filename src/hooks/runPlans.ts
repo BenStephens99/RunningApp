@@ -6,7 +6,7 @@ import {
   getRunPlan,
   getRunPlans,
   updateRunPlan,
-} from "~/serverFunctions";
+} from "~/runPlansServerFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { useInvalidateMutation } from "./useInvalidateMutation";
 

@@ -6,7 +6,7 @@ import {
   deleteRun,
   generateRunInsights,
   updateRun,
-} from "~/serverFunctions";
+} from "~/runsServerFunctions";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 
 export function useDeleteRun(planId: number | string) {

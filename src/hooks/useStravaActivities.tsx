@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getStravaActivities } from "~/serverFunctions";
+import { getStravaActivities } from "~/stravaServerFunctions";
 import { StravaActivity } from "~/types";
 
 export function useStravaActivities() {
@@ -28,4 +28,3 @@ export function useStravaActivities() {
     isLoadingStravaActivities: isLoading,
   };
 }
-
