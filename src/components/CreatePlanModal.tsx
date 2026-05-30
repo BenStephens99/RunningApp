@@ -18,7 +18,7 @@ import { useAddMultipleRuns } from "~/hooks/runs";
 import { useCreateGeminiRunPlan } from "~/hooks/gemini";
 import { IconRun } from "@tabler/icons-react";
 import { DateInput } from "@mantine/dates";
-import ReactMarkdown from "react-markdown";
+import { Streamdown, type Components } from "streamdown";
 import {
   useGetUnconfirmedPlans,
   useMarkPlanAsDiscarded,
@@ -27,6 +27,23 @@ import {
 import dayjs from "dayjs";
 import { useCreateRunPlan } from "~/hooks/runPlans";
 import { useRouter } from "@tanstack/react-router";
+
+const planNotesMarkdownComponents: Components = {
+  p: ({ children }) => (
+    <Text fz="sm" mb="xs">
+      {children}
+    </Text>
+  ),
+  ul: ({ children }) => <List>{children}</List>,
+  ol: ({ children }) => <List>{children}</List>,
+  li: ({ children }) => (
+    <List.Item>
+      <Text fz="sm" mb="xs">
+        {children}
+      </Text>
+    </List.Item>
+  ),
+};
 
 export function CreatePlanModal({
   opened,
@@ -206,26 +223,12 @@ function ModalContent({
           <Text fz="md" fw="bold" mb="xs">
             Notes:
           </Text>
-          <ReactMarkdown
-            components={{
-              p: ({ children }) => (
-                <Text fz="sm" mb="xs">
-                  {children}
-                </Text>
-              ),
-              ul: ({ children }) => <List>{children}</List>,
-              ol: ({ children }) => <List>{children}</List>,
-              li: ({ children }) => (
-                <List.Item>
-                  <Text fz="sm" mb="xs">
-                    {children}
-                  </Text>
-                </List.Item>
-              ),
-            }}
+          <Streamdown
+            components={planNotesMarkdownComponents}
+            mode="static"
           >
             {pendingPlan.formatted_response.comments}
-          </ReactMarkdown>
+          </Streamdown>
         </Paper>
         <Paper withBorder p="md">
           <Table>

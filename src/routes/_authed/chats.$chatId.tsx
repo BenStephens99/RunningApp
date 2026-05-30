@@ -13,11 +13,97 @@ import { IconArrowLeft, IconArrowUp } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { Streamdown, type Components } from "streamdown";
+import "streamdown/styles.css";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { useGetChatMessages, useSendChatMessage } from "~/hooks/chats";
 
 const STREAM_DELAY_MS = 10;
+
+const chatMarkdownComponents: Components = {
+  p: ({ children }) => (
+    <Text size="sm" mb="xs" style={{ lineHeight: 1.5 }}>
+      {children}
+    </Text>
+  ),
+  ul: ({ children }) => (
+    <ul style={{ marginTop: 0, marginBottom: 8, paddingLeft: 18 }}>
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol style={{ marginTop: 0, marginBottom: 8, paddingLeft: 18 }}>
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => (
+    <li>
+      <Text size="sm" component="span" style={{ lineHeight: 1.5 }}>
+        {children}
+      </Text>
+    </li>
+  ),
+  inlineCode: ({ children }) => (
+    <Text
+      component="code"
+      size="sm"
+      style={{
+        background: "var(--mantine-color-dark-6)",
+        padding: "2px 6px",
+        borderRadius: 6,
+      }}
+    >
+      {children}
+    </Text>
+  ),
+  code: ({ children, className, ...props }) => {
+    const isBlock = "data-block" in props;
+
+    if (!isBlock) {
+      return (
+        <Text
+          component="code"
+          size="sm"
+          style={{
+            background: "var(--mantine-color-dark-6)",
+            padding: "2px 6px",
+            borderRadius: 6,
+          }}
+        >
+          {children}
+        </Text>
+      );
+    }
+
+    return (
+      <Paper
+        component="pre"
+        withBorder
+        radius="sm"
+        p="xs"
+        my="xs"
+        style={{
+          background: "var(--mantine-color-dark-8)",
+          borderColor: "var(--mantine-color-dark-5)",
+          overflowX: "auto",
+        }}
+      >
+        <code
+          className={className}
+          style={{
+            display: "block",
+            fontFamily: "var(--mantine-font-family-monospace)",
+            fontSize: "var(--mantine-font-size-xs)",
+            lineHeight: 1.55,
+            whiteSpace: "pre",
+          }}
+        >
+          {children}
+        </code>
+      </Paper>
+    );
+  },
+};
 
 export const Route = createFileRoute("/_authed/chats/$chatId")({
   component: ChatDetailPage,
@@ -119,62 +205,35 @@ function ChatDetailPage() {
       <ScrollArea h="100%" offsetScrollbars px={4}>
         <Stack gap="xs" pb={100}>
           {chatMessagesToDisplay.length ? (
-            chatMessagesToDisplay.map((message) => (
-              <Card
-                key={message.id}
-                radius="lg"
-                p="sm"
-                maw={message.role === "user" ? "85%" : "100%"}
-                ml={message.role === "user" ? "auto" : 0}
-                bg={
-                  message.role === "user"
-                    ? "var(--mantine-color-indigo-9)"
-                    : "transparent"
-                }
-              >
-                <ReactMarkdown
-                  components={{
-                    p: ({ children }) => (
-                      <Text size="sm" mb="xs" style={{ lineHeight: 1.5 }}>
-                        {children}
-                      </Text>
-                    ),
-                    ul: ({ children }) => (
-                      <ul style={{ marginTop: 0, marginBottom: 8, paddingLeft: 18 }}>
-                        {children}
-                      </ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol style={{ marginTop: 0, marginBottom: 8, paddingLeft: 18 }}>
-                        {children}
-                      </ol>
-                    ),
-                    li: ({ children }) => (
-                      <li>
-                        <Text size="sm" component="span" style={{ lineHeight: 1.5 }}>
-                          {children}
-                        </Text>
-                      </li>
-                    ),
-                    code: ({ children }) => (
-                      <Text
-                        component="code"
-                        size="sm"
-                        style={{
-                          background: "var(--mantine-color-dark-6)",
-                          padding: "2px 6px",
-                          borderRadius: 6,
-                        }}
-                      >
-                        {children}
-                      </Text>
-                    ),
-                  }}
+            chatMessagesToDisplay.map((message) => {
+              const isStreamingMessage =
+                message.id === "streaming-generated" && isStreaming;
+
+              return (
+                <Card
+                  key={message.id}
+                  radius="lg"
+                  p="sm"
+                  maw={message.role === "user" ? "85%" : "100%"}
+                  ml={message.role === "user" ? "auto" : 0}
+                  bg={
+                    message.role === "user"
+                      ? "var(--mantine-color-indigo-9)"
+                      : "transparent"
+                  }
                 >
-                  {message.message || "..."}
-                </ReactMarkdown>
-              </Card>
-            ))
+                  <Streamdown
+                    animated
+                    caret="block"
+                    components={chatMarkdownComponents}
+                    isAnimating={isStreamingMessage}
+                    mode={isStreamingMessage ? "streaming" : "static"}
+                  >
+                    {isStreamingMessage ? message.message : message.message || "..."}
+                  </Streamdown>
+                </Card>
+              );
+            })
           ) : (
             <Text c="dimmed" size="sm" ta="center" mt="md">
               Send your first message.

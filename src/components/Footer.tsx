@@ -15,8 +15,6 @@ export function Footer() {
     select: (state) => state.location.pathname === "/plan",
   });
 
-
-
   return (
     <>
       <CreatePlanModal opened={createPlanOpened} onClose={closeCreatePlan} />
