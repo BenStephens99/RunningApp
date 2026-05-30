@@ -199,7 +199,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <AppShell
                 bg="var(--mantine-primary-color-9)"
                 header={{ height: 58 }}
-                footer={{ height: isFooterHidden ? 0 : 79 }}
+                footer={{
+                  height: isFooterHidden ? 0 : 79,
+                  collapsed: isFooterHidden,
+                  offset: !isFooterHidden,
+                }}
               >
                 <AppShell.Header bg="var(--mantine-primary-color-6)">
                   <Header />
