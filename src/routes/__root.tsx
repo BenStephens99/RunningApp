@@ -24,7 +24,8 @@ import { queryClient } from "../utils/queryClient";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
 import { Header } from "~/components/Header";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AppFooterVisibilityProvider } from "~/context/AppFooterVisibilityContext";
 
 const Footer = React.lazy(() =>
   import("~/components/Footer").then((mod) => ({ default: mod.Footer }))
@@ -149,10 +150,19 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { user } = Route.useRouteContext();
+  const [isFooterHidden, setFooterHidden] = useState(false);
 
   useEffect(() => {
     queryClient.setQueryData(QueryCacheKeys.user(), user);
   }, [user]);
+
+  const footerVisibility = useMemo(
+    () => ({
+      isFooterHidden,
+      setFooterHidden,
+    }),
+    [isFooterHidden],
+  );
 
   const theme = createTheme({
     cursorType: "pointer",
@@ -185,25 +195,29 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <MantineProvider theme={theme} forceColorScheme="dark">
           <Notifications />
           <QueryClientProvider client={queryClient}>
-            <AppShell
-              bg="var(--mantine-primary-color-9)"
-              header={{ height: 58 }}
-              footer={{ height: 79 }}
-            >
-              <AppShell.Header bg="var(--mantine-primary-color-6)">
-                <Header />
-              </AppShell.Header>
-              <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
-                <Box my="md" h="100%">
-                  {children}
-                </Box>
-              </AppShell.Main>
-              <AppShell.Footer bg="var(--mantine-primary-color-6)">
-                <React.Suspense fallback={<Skeleton height={60} />}>
-                  <Footer />
-                </React.Suspense>
-              </AppShell.Footer>
-            </AppShell>
+            <AppFooterVisibilityProvider value={footerVisibility}>
+              <AppShell
+                bg="var(--mantine-primary-color-9)"
+                header={{ height: 58 }}
+                footer={{ height: isFooterHidden ? 0 : 79 }}
+              >
+                <AppShell.Header bg="var(--mantine-primary-color-6)">
+                  <Header />
+                </AppShell.Header>
+                <AppShell.Main w="100%" maw={"1200px"} mx="auto" px="xs">
+                  <Box my="md" h="100%">
+                    {children}
+                  </Box>
+                </AppShell.Main>
+                {!isFooterHidden && (
+                  <AppShell.Footer bg="var(--mantine-primary-color-6)">
+                    <React.Suspense fallback={<Skeleton height={60} />}>
+                      <Footer />
+                    </React.Suspense>
+                  </AppShell.Footer>
+                )}
+              </AppShell>
+            </AppFooterVisibilityProvider>
             <TanStackRouterDevtools position="bottom-right" />
             <ReactQueryDevtools buttonPosition="bottom-right" />
             <Scripts />

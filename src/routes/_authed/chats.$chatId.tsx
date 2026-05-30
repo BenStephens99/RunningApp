@@ -9,13 +9,15 @@ import {
   Text,
   Textarea,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconArrowLeft, IconArrowUp } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Streamdown, type Components } from "streamdown";
 import "streamdown/styles.css";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
+import { useAppFooterVisibility } from "~/context/AppFooterVisibilityContext";
 import { useGetChatMessages, useSendChatMessage } from "~/hooks/chats";
 
 const STREAM_DELAY_MS = 10;
@@ -115,11 +117,22 @@ function ChatDetailPage() {
   const queryClient = useQueryClient();
   const messages = useGetChatMessages(chatId);
   const sendChatMessage = useSendChatMessage();
+  const { setFooterHidden } = useAppFooterVisibility();
+  const isTabletSizeOrBelow = useMediaQuery("(max-width: 48em)");
 
   const [draftMessage, setDraftMessage] = useState("");
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const [streamedAssistantMessage, setStreamedAssistantMessage] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isMessageInputFocused, setIsMessageInputFocused] = useState(false);
+
+  useEffect(() => {
+    setFooterHidden(isMessageInputFocused && isTabletSizeOrBelow);
+  }, [isMessageInputFocused, isTabletSizeOrBelow, setFooterHidden]);
+
+  useEffect(() => {
+    return () => setFooterHidden(false);
+  }, [setFooterHidden]);
 
   const chatMessagesToDisplay = useMemo(() => {
     const storedMessages = (messages.data ?? []).map((message) => ({
@@ -272,6 +285,8 @@ function ChatDetailPage() {
             maxRows={6}
             value={draftMessage}
             onChange={(event) => setDraftMessage(event.currentTarget.value)}
+            onFocus={() => setIsMessageInputFocused(true)}
+            onBlur={() => setIsMessageInputFocused(false)}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
