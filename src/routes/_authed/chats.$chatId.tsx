@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { IconArrowLeft, IconArrowUp } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Streamdown, type Components } from "streamdown";
 import "streamdown/styles.css";
@@ -111,6 +111,7 @@ export const Route = createFileRoute("/_authed/chats/$chatId")({
 
 function ChatDetailPage() {
   const { chatId } = Route.useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const messages = useGetChatMessages(chatId);
   const sendChatMessage = useSendChatMessage();
@@ -184,6 +185,15 @@ function ChatDetailPage() {
     }
   };
 
+  const handleBackClick = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    navigate({ to: "/chats" });
+  };
+
   return (
     <Stack
       h="calc(100dvh - 170px)"
@@ -192,11 +202,10 @@ function ChatDetailPage() {
       py="xs"
     >
       <ActionIcon
-        component={Link}
-        to="/chats"
         variant="subtle"
         size="lg"
-        aria-label="Back to chats"
+        onClick={handleBackClick}
+        aria-label="Go back"
         style={{ position: "absolute", top: 0, left: 0, zIndex: 3 }}
       >
         <IconArrowLeft size={20} />

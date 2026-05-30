@@ -1,5 +1,5 @@
 import { Stack } from "@mantine/core";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useDeleteRun, useGenerateRunInsights, useUpdateRun } from "~/hooks/runs";
 import { StravaActivityModal } from "~/components/StravaActivityModal";
 import { EditRunModal } from "~/components/EditRunModal";
@@ -14,6 +14,7 @@ import { Run, StravaActivity } from "~/types";
 import { useGetRunPlan, useUpdateRunPlan } from "~/hooks/runPlans";
 import { useQueryClient } from "@tanstack/react-query";
 import { QueryCacheKeys } from "~/QueryCacheKeys";
+import { useGetOrCreateRunChat } from "~/hooks/chats";
 
 export const Route = createFileRoute('/_authed/plan/$planId')({
   component: RunsPage,
@@ -21,11 +22,13 @@ export const Route = createFileRoute('/_authed/plan/$planId')({
 
 function RunsPage() {
   const planId = Route.useParams().planId;
+  const navigate = useNavigate();
   const runPlan = useGetRunPlan(planId);
   const updateRun = useUpdateRun(planId);
   const updateRunPlan = useUpdateRunPlan();
   const generateRunInsightsMutation = useGenerateRunInsights(planId);
   const deleteRun = useDeleteRun(planId);
+  const getOrCreateRunChat = useGetOrCreateRunChat(planId);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -103,6 +106,21 @@ function RunsPage() {
     openStravaModal();
   };
 
+  const handleChatClick = async (run: Run) => {
+    const chat = await getOrCreateRunChat.mutateAsync({
+      data: {
+        runId: run.id,
+      },
+    });
+
+    navigate({
+      to: "/chats/$chatId",
+      params: {
+        chatId: chat.id,
+      },
+    });
+  };
+
   return (
     <Stack>
       {groupedRuns.map(({ weekNumber, runs: weekRuns }) => (
@@ -115,6 +133,7 @@ function RunsPage() {
           activitiesMap={activitiesMap}
           isLoadingStravaActivities={isLoadingStravaActivities}
           onStravaClick={handleStravaClick}
+          onChatClick={(run) => void handleChatClick(run)}
           onEditClick={(runId) => {
             setEditModalRunId(runId);
             openEditModal();
@@ -123,6 +142,11 @@ function RunsPage() {
             setDeleteModalRunId(runId);
             openDeleteModal();
           }}
+          openingRunChatId={
+            getOrCreateRunChat.isPending
+              ? getOrCreateRunChat.variables?.data.runId ?? null
+              : null
+          }
           setCardRef={setCardRef}
         />
       ))}

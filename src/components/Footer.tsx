@@ -1,5 +1,5 @@
 import { ActionIcon, Group } from "@mantine/core";
-import { IconList, IconMessageCircle, IconPlus } from "@tabler/icons-react";
+import { IconList, IconPlus } from "@tabler/icons-react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { CreatePlanModal } from "./CreatePlanModal";
 import { useDisclosure } from "@mantine/hooks";
@@ -41,16 +41,6 @@ export function Footer() {
             <IconList size={INNER_ICON_SIZE} />
           </ActionIcon>
         )}
-        <ActionIcon
-          component={Link}
-          to="/chats"
-          size={ICON_SIZE}
-          color="var(--mantine-primary-color-4)"
-          radius="xl"
-          aria-label="Chats"
-        >
-          <IconMessageCircle size={INNER_ICON_SIZE} />
-        </ActionIcon>
       </Group>
     </>
   );

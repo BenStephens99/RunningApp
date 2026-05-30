@@ -1,8 +1,8 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { getSupabaseServerClient } from "./utils/supabase";
 import { StravaActivity } from "./types";
 
-async function getStravaTokenHelper() {
+export const getStravaTokenHelper = createServerOnlyFn(async () => {
   const supabase = getSupabaseServerClient();
   const {
     data: { user },
@@ -72,7 +72,7 @@ async function getStravaTokenHelper() {
   }
 
   return { hasToken: true, accessToken: profile.strava_access_token };
-}
+});
 
 export const getStravaAuthUrl = createServerFn({ method: "GET" }).handler(
   async () => {

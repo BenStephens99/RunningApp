@@ -8,12 +8,14 @@ import {
   Box,
   Loader,
   Skeleton,
+  Tooltip,
 } from "@mantine/core";
 import {
   IconPencil,
   IconTrash,
   IconBrandStrava,
   IconDots,
+  IconMessageCircle,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { Run, StravaActivity } from "~/types";
@@ -27,8 +29,10 @@ interface RunCardProps {
   isNextRun: boolean;
   stravaActivity: StravaActivity | null;
   onStravaClick: () => void;
+  onChatClick: () => void;
   onEditClick: () => void;
   onDeleteClick: () => void;
+  isOpeningChat: boolean;
   setCardRef: (element: HTMLDivElement | null) => void;
 }
 
@@ -39,8 +43,10 @@ export function RunCard({
   isNextRun,
   stravaActivity,
   onStravaClick,
+  onChatClick,
   onEditClick,
   onDeleteClick,
+  isOpeningChat,
   setCardRef,
 }: RunCardProps) {
   const isGeneratingInsights =
@@ -52,9 +58,9 @@ export function RunCard({
       <Card
         shadow="xs"
         radius="md"
-        bg='var(--mantine-primary-color-7)'
+        bg="var(--mantine-primary-color-7)"
         withBorder
-        c={'var(--mantine-color-gray-3)'}
+        c={"var(--mantine-color-gray-3)"}
         style={{
           borderColor: isNextRun
             ? "var(--mantine-color-blue-7)"
@@ -69,17 +75,44 @@ export function RunCard({
                 variant={run.strava_link ? "filled" : "light"}
                 size="lg"
                 color={run.strava_link ? "green" : "orange.5"}
-                bg={run.strava_link ? "green.8" : 'var(--mantine-primary-color-4)'}
+                bg={
+                  run.strava_link ? "green.8" : "var(--mantine-primary-color-4)"
+                }
                 radius="lg"
                 onClick={onStravaClick}
               >
                 <IconBrandStrava size={20} />
               </ActionIcon>
-              <Text fz="xs">{dayjs(run.run_date).format("ddd, DD MMMM YYYY")}</Text>
-              <Box ml="auto">
+              <Text fz="xs">
+                {dayjs(run.run_date).format("ddd, DD MMMM YYYY")}
+              </Text>
+              <Group ml="auto" gap="xs" wrap="nowrap">
+                <Tooltip label={run.chat_id ? "Open run chat" : "Start run chat"}>
+                  <ActionIcon
+                    variant="subtle"
+                    bg="transparent"
+                    size="sm"
+                    color={run.chat_id ? "blue.3" : "gray.4"}
+                    radius="xl"
+                    onClick={onChatClick}
+                    disabled={isOpeningChat}
+                    aria-label={run.chat_id ? "Open run chat" : "Start run chat"}
+                  >
+                    {isOpeningChat ? (
+                      <Loader size={14} color="gray.1" />
+                    ) : (
+                      <IconMessageCircle size={18} />
+                    )}
+                  </ActionIcon>
+                </Tooltip>
                 <Menu>
                   <Menu.Target>
-                    <ActionIcon variant="subtle" bg="transparent" color="gray" size="sm">
+                    <ActionIcon
+                      variant="subtle"
+                      bg="transparent"
+                      color="gray"
+                      size="sm"
+                    >
                       <IconDots size={20} />
                     </ActionIcon>
                   </Menu.Target>
@@ -99,25 +132,41 @@ export function RunCard({
                     </Menu.Item>
                   </Menu.Dropdown>
                 </Menu>
-              </Box>
+              </Group>
             </Group>
             {run.notes && (
-              <Text fz="sm" lh={1.2}>{run.notes}</Text>
+              <Text fz="sm" lh={1.2}>
+                {run.notes}
+              </Text>
             )}
             <Group justify="flex-start" gap="lg">
               <Stack gap="0">
-                <Text fz="xs" fw={500} c="dimmed">Distance</Text>
-                <Text fz="md" fw={500}>{run.run_length} km</Text>
+                <Text fz="xs" fw={500} c="dimmed">
+                  Distance
+                </Text>
+                <Text fz="md" fw={500}>
+                  {run.run_length} km
+                </Text>
               </Stack>
               {run.pace && (
                 <Stack gap="0">
-                  <Text fz="xs" fw={500} c="dimmed">Pace</Text>
-                  <Text fz="md" fw={500}>{run.pace}</Text>
+                  <Text fz="xs" fw={500} c="dimmed">
+                    Pace
+                  </Text>
+                  <Text fz="md" fw={500}>
+                    {run.pace}
+                  </Text>
                 </Stack>
               )}
             </Group>
             {run.strava_link && (
-              <Card shadow="xs" radius="md" bg='var(--mantine-primary-color-6)' c='var(--mantine-color-gray-3)' withBorder>
+              <Card
+                shadow="xs"
+                radius="md"
+                bg="var(--mantine-primary-color-6)"
+                c="var(--mantine-color-gray-3)"
+                withBorder
+              >
                 <Group justify="flex-start" gap="lg" align="center" h="40px">
                   {isLoadingStravaActivities ? (
                     <Skeleton height="100%" width="100%" />
@@ -125,20 +174,35 @@ export function RunCard({
                     <>
                       {stravaActivity?.distance && (
                         <Stack gap="0">
-                          <Text fz="xs" fw={500} c="dimmed">Distance</Text>
-                          <Text fz="sm" fw={500}>{formatDistance(stravaActivity?.distance)} km</Text>
+                          <Text fz="xs" fw={500} c="dimmed">
+                            Distance
+                          </Text>
+                          <Text fz="sm" fw={500}>
+                            {formatDistance(stravaActivity?.distance)} km
+                          </Text>
                         </Stack>
                       )}
                       {stravaActivity?.moving_time && (
                         <Stack gap="0">
-                          <Text fz="xs" fw={500} c="dimmed">Pace</Text>
-                          <Text fz="sm" fw={500}>{formatPace(stravaActivity?.distance, stravaActivity?.moving_time)}</Text>
+                          <Text fz="xs" fw={500} c="dimmed">
+                            Pace
+                          </Text>
+                          <Text fz="sm" fw={500}>
+                            {formatPace(
+                              stravaActivity?.distance,
+                              stravaActivity?.moving_time,
+                            )}
+                          </Text>
                         </Stack>
                       )}
                       {stravaActivity?.moving_time && (
                         <Stack gap="0">
-                          <Text fz="xs" fw={500} c="dimmed">Time</Text>
-                          <Text fz="sm" fw={500}>{formatTime(stravaActivity?.elapsed_time)}</Text>
+                          <Text fz="xs" fw={500} c="dimmed">
+                            Time
+                          </Text>
+                          <Text fz="sm" fw={500}>
+                            {formatTime(stravaActivity?.elapsed_time)}
+                          </Text>
                         </Stack>
                       )}
                     </>
@@ -150,12 +214,17 @@ export function RunCard({
                       <>
                         <Box h="75px">
                           <Group h="100%" align="center" justify="center">
-                            <Loader type="dots" color="var(--mantine-color-green-5)" />
+                            <Loader
+                              type="dots"
+                              color="var(--mantine-color-green-5)"
+                            />
                           </Group>
                         </Box>
                       </>
                     ) : (
-                      <Text fz="xs" mt="sm" lh={1.2} fw="500">{run.ai_insights}</Text>
+                      <Text fz="xs" mt="sm" lh={1.2} fw="500">
+                        {run.ai_insights}
+                      </Text>
                     )}
                   </>
                 )}

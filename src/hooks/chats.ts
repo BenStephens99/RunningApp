@@ -6,6 +6,7 @@ import {
   deleteChat,
   getChatMessages,
   getChats,
+  getOrCreateRunChat,
   sendChatMessage,
 } from "~/chatServerFunctions";
 import { useInvalidateMutation } from "./useInvalidateMutation";
@@ -28,6 +29,13 @@ export function useDeleteChat() {
   return useInvalidateMutation({
     mutationFn: useServerFn(deleteChat),
     queryKey: QueryCacheKeys.chats(),
+  });
+}
+
+export function useGetOrCreateRunChat(planId: string) {
+  return useInvalidateMutation({
+    mutationFn: useServerFn(getOrCreateRunChat),
+    queryKeys: [QueryCacheKeys.chats(), QueryCacheKeys.runPlan(planId)],
   });
 }
 

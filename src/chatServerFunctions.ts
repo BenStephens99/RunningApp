@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { GoogleGenAI } from "@google/genai";
 import { getSupabaseServerClient } from "./utils/supabase";
-import { Chat, ChatMessage } from "./types";
+import { Chat, ChatMessage, Run, StravaActivity } from "./types";
+import { getStravaTokenHelper } from "./stravaServerFunctions";
+import { formatDistance, formatPace, formatTime } from "./utils/formatting";
 
 const CHAT_MODEL = "gemini-3.5-flash";
 const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -34,6 +36,91 @@ Rules:
 - Keep it specific to the user's intent.
 `.trim();
 
+function formatRunChatName(run: Run) {
+  const runDate = new Date(run.run_date);
+  const dateLabel = Number.isNaN(runDate.getTime())
+    ? run.run_date
+    : runDate.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+      });
+
+  return `${run.run_length} km run ${dateLabel}`.slice(0, CHAT_NAME_MAX_LENGTH);
+}
+
+async function getStravaActivityContext(stravaActivityId: string) {
+  try {
+    const tokenResult = await getStravaTokenHelper();
+    if (!tokenResult.hasToken || !tokenResult.accessToken) {
+      return null;
+    }
+
+    const activityResponse = await fetch(
+      `https://www.strava.com/api/v3/activities/${stravaActivityId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${tokenResult.accessToken}`,
+        },
+      }
+    );
+
+    if (!activityResponse.ok) {
+      return null;
+    }
+
+    const activity: StravaActivity = await activityResponse.json();
+    return [
+      `Strava activity name: ${activity.name}`,
+      `Strava activity date: ${activity.start_date}`,
+      `Strava activity type: ${activity.type}`,
+      `Actual distance: ${formatDistance(activity.distance)} km`,
+      `Moving time: ${formatTime(activity.moving_time)}`,
+      `Elapsed time: ${formatTime(activity.elapsed_time)}`,
+      `Actual pace: ${formatPace(activity.distance, activity.moving_time)}`,
+    ].join("\n");
+  } catch (_error) {
+    return null;
+  }
+}
+
+async function formatRunContext(run: Run) {
+  const stravaActivityContext = run.strava_link
+    ? await getStravaActivityContext(run.strava_link)
+    : null;
+
+  return [
+    "The current chat is linked to this run. Use this as durable context for the user's questions.",
+    `Run id: ${run.id}`,
+    `Plan id: ${run.plan_id}`,
+    `Scheduled date: ${run.run_date}`,
+    `Target distance: ${run.run_length} km`,
+    run.pace ? `Target pace: ${run.pace}` : null,
+    run.notes ? `Planned notes: ${run.notes}` : null,
+    run.strava_link
+      ? `Completion status: completed and linked to Strava activity ${run.strava_link}`
+      : "Completion status: not completed or not linked to Strava yet",
+    stravaActivityContext,
+    run.ai_insights ? `Existing AI insights: ${run.ai_insights}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+async function getRunContextForChat(chatId: string, userId: string) {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("runs")
+    .select("*")
+    .eq("chat_id", chatId)
+    .eq("user_id", userId)
+    .limit(1);
+
+  if (error) throw error;
+
+  const run = data?.[0] as Run | undefined;
+  return run ? await formatRunContext(run) : null;
+}
+
 async function getAuthenticatedUserId() {
   const supabase = getSupabaseServerClient();
   const {
@@ -52,14 +139,32 @@ export const getChats = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = getSupabaseServerClient();
   const userId = await getAuthenticatedUserId();
 
-  const { data, error } = await supabase
-    .from("chats")
-    .select("*")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
+  const [
+    { data: chats, error: chatsError },
+    { data: linkedRuns, error: linkedRunsError },
+  ] = await Promise.all([
+    supabase
+      .from("chats")
+      .select("*")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("runs")
+      .select("chat_id")
+      .eq("user_id", userId)
+      .not("chat_id", "is", null),
+  ]);
 
-  if (error) throw error;
-  return (data ?? []) as Chat[];
+  if (chatsError) throw chatsError;
+  if (linkedRunsError) throw linkedRunsError;
+
+  const runChatIds = new Set(
+    (linkedRuns ?? [])
+      .map((run) => run.chat_id)
+      .filter((chatId): chatId is string => !!chatId)
+  );
+
+  return (chats ?? []).filter((chat) => !runChatIds.has(chat.id)) as Chat[];
 });
 
 export const createChat = createServerFn({ method: "POST" }).handler(async () => {
@@ -78,6 +183,63 @@ export const createChat = createServerFn({ method: "POST" }).handler(async () =>
   if (error) throw error;
   return data as Chat;
 });
+
+export const getOrCreateRunChat = createServerFn({ method: "POST" })
+  .inputValidator((d: { runId: string }) => d)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const userId = await getAuthenticatedUserId();
+
+    const { data: run, error: runError } = await supabase
+      .from("runs")
+      .select("*")
+      .eq("id", data.runId)
+      .eq("user_id", userId)
+      .single();
+
+    if (runError || !run) {
+      throw runError ?? new Error("Run not found");
+    }
+
+    const typedRun = run as Run;
+
+    if (typedRun.chat_id) {
+      const { data: existingChat, error: existingChatError } = await supabase
+        .from("chats")
+        .select("*")
+        .eq("id", typedRun.chat_id)
+        .eq("user_id", userId)
+        .single();
+
+      if (!existingChatError && existingChat) {
+        return existingChat as Chat;
+      }
+    }
+
+    const { data: newChat, error: createChatError } = await supabase
+      .from("chats")
+      .insert({
+        user_id: userId,
+        status: "active",
+        name: formatRunChatName(typedRun),
+      })
+      .select("*")
+      .single();
+
+    if (createChatError || !newChat) {
+      throw createChatError ?? new Error("Failed to create run chat");
+    }
+
+    const { error: updateRunError } = await supabase
+      .from("runs")
+      .update({ chat_id: newChat.id })
+      .eq("id", typedRun.id)
+      .eq("user_id", userId);
+
+    if (updateRunError) throw updateRunError;
+
+    return newChat as Chat;
+  });
 
 export const deleteChat = createServerFn({ method: "POST" })
   .inputValidator((d: { chatId: string }) => d)
@@ -103,6 +265,14 @@ export const deleteChat = createServerFn({ method: "POST" })
       .eq("user_id", userId);
 
     if (deleteMessagesError) throw deleteMessagesError;
+
+    const { error: unlinkRunsError } = await supabase
+      .from("runs")
+      .update({ chat_id: null })
+      .eq("chat_id", data.chatId)
+      .eq("user_id", userId);
+
+    if (unlinkRunsError) throw unlinkRunsError;
 
     const { error: deleteChatError } = await supabase
       .from("chats")
@@ -184,10 +354,15 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       canGenerateChatName = true;
     }
 
+    const resolvedChatId = chatId;
+    if (!resolvedChatId) {
+      throw new Error("Failed to resolve chat");
+    }
+
     const { data: userMessage, error: userMessageError } = await supabase
       .from("chat_messages")
       .insert({
-        chat_id: chatId,
+        chat_id: resolvedChatId,
         user_id: userId,
         message: trimmedMessage,
         role: "user",
@@ -204,7 +379,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     const { data: existingMessages, error: historyError } = await supabase
       .from("chat_messages")
       .select("role,message")
-      .eq("chat_id", chatId)
+      .eq("chat_id", resolvedChatId)
       .order("created_at", { ascending: true });
 
     if (historyError) throw historyError;
@@ -213,11 +388,12 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       .map((message) => `${message.role}: ${message.message}`)
       .join("\n");
     const isFirstExchange = (existingMessages ?? []).length === 1;
+    const runContext = await getRunContextForChat(resolvedChatId, userId);
 
     const { data: assistantMessage, error: assistantMessageError } = await supabase
       .from("chat_messages")
       .insert({
-        chat_id: chatId,
+        chat_id: resolvedChatId,
         user_id: userId,
         message: "",
         role: "generated",
@@ -235,7 +411,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     try {
       const response = await gemini.models.generateContent({
         model: CHAT_MODEL,
-        contents: `${RUNNING_COACH_SYSTEM_PROMPT}\n\nConversation:\n${conversationHistory}`,
+        contents: `${RUNNING_COACH_SYSTEM_PROMPT}${runContext ? `\n\nRun context:\n${runContext}` : ""}\n\nConversation:\n${conversationHistory}`,
       });
       generatedText = response.text?.trim() ?? "";
     } catch (error) {
@@ -299,12 +475,12 @@ ${generatedText}`,
         status: "active",
         ...(generatedChatName ? { name: generatedChatName } : {}),
       })
-      .eq("id", chatId);
+      .eq("id", resolvedChatId);
 
     if (updateChatError) throw updateChatError;
 
     return {
-      chatId: chatId as string,
+      chatId: resolvedChatId,
       userMessage: userMessage as ChatMessage,
       assistantMessage: updatedAssistantMessage as ChatMessage,
     };

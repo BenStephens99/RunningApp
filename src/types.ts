@@ -27,6 +27,7 @@ export type Run = {
   pace: string;
   notes: string;
   ai_insights: string | null;
+  chat_id: string | null;
 };
 
 export type CreateRunPayload = Pick<Run, "run_length" | "run_date" | "plan_id" | "pace" | "notes">;
